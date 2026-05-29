@@ -13,6 +13,7 @@ class grade_form extends \moodleform {
         $mform = $this->_form;
         $stage = $this->_customdata['stage'];
         $options = $this->_customdata['options'];
+        $processassign = $this->_customdata['processassign'];
         $gradinginstance = $this->_customdata['gradinginstance'] ?? null;
         $showshownext = !empty($this->_customdata['showshownext']);
 
@@ -31,8 +32,14 @@ class grade_form extends \moodleform {
             $mform->addRule('grade', get_string('required'), 'required', null, 'client');
         }
 
-        $mform->addElement('editor', 'feedback', get_string('feedback', 'processassign'), null, $options['editor']);
-        $mform->setType('feedback', PARAM_RAW);
+        if (!empty($processassign->feedbackcomments)) {
+            $mform->addElement('editor', 'feedback', get_string('feedback', 'processassign'), null, $options['editor']);
+            $mform->setType('feedback', PARAM_RAW);
+        }
+        if (!empty($processassign->feedbackfiles)) {
+            $mform->addElement('filemanager', 'feedbackfiles', get_string('feedbackfiles', 'assignfeedback_file'),
+                null, $options['feedbackfilemanager']);
+        }
 
         $mform->addElement('advcheckbox', 'notifystudent', get_string('notifystudent', 'processassign'));
         $mform->setDefault('notifystudent', 1);

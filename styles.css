@@ -1,7 +1,3 @@
-.path-mod-processassign .secondary-navigation li[data-key="modulepage"] {
-    display: none !important;
-}
-
 .path-mod-processassign .processassign-submissionsbar {
     border-bottom: 1px solid #dee2e6;
     padding-bottom: 1.5rem;

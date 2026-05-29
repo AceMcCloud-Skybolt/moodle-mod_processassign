@@ -19,13 +19,13 @@ class submission_form extends \moodleform {
         $mform->setType('stageid', PARAM_INT);
         $mform->setDefault('stageid', $stage->id);
 
-        if (!empty($processassign->submissiononlinetext)) {
+        if (!empty($stage->submissiononlinetext)) {
             $mform->addElement('editor', 'submissioneditor', get_string('submissiontext', 'processassign'), null,
                 $options['editor']);
             $mform->setType('submissioneditor', PARAM_RAW);
         }
 
-        if (!empty($processassign->submissionfile)) {
+        if (!empty($stage->submissionfile)) {
             $mform->addElement('filemanager', 'submissionfiles', get_string('submissionfiles', 'processassign'), null,
                 $options['filemanager']);
         }
@@ -53,13 +53,13 @@ class submission_form extends \moodleform {
         $processassign = $this->_customdata['processassign'];
         $text = trim($data['submissioneditor']['text'] ?? '');
         $filecount = 0;
-        if (!empty($processassign->submissionfile)) {
+        if (!empty($stage->submissionfile)) {
             $fileinfo = file_get_draft_area_info($data['submissionfiles']);
             $filecount = $fileinfo['filecount'];
         }
 
         if ($text === '' && empty($filecount)) {
-            if (!empty($processassign->submissiononlinetext)) {
+            if (!empty($stage->submissiononlinetext)) {
                 $errors['submissioneditor'] = get_string('uploadorwrite', 'processassign');
             } else {
                 $errors['submissionfiles'] = get_string('uploadorwrite', 'processassign');

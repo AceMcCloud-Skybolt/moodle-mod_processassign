@@ -12,6 +12,7 @@ class backup_processassign_activity_structure_step extends backup_activity_struc
             'course', 'name', 'intro', 'introformat', 'grade', 'allowsubmissionsfromdate', 'duedate', 'cutoffdate',
             'gradingduedate',
             'alwaysshowdescription', 'submissiononlinetext', 'submissionfile', 'maxfiles', 'maxbytes',
+            'feedbackcomments', 'feedbackfiles', 'feedbackmaxfiles', 'feedbackmaxbytes',
             'wordlimitenabled', 'wordlimit', 'sendnotifications', 'sendstudentnotifications', 'submissiondrafts',
             'requiresubmissionstatement', 'maxattempts', 'attemptreopenmethod', 'gradebookmode', 'timemodified',
         ]);
@@ -19,7 +20,8 @@ class backup_processassign_activity_structure_step extends backup_activity_struc
         $stages = new backup_nested_element('stages');
         $stage = new backup_nested_element('stage', ['id'], [
             'sortorder', 'stagetype', 'name', 'instructions', 'instructionsformat', 'maxgrade', 'duedate',
-            'timelimit', 'wordlimitenabled', 'wordlimit', 'requirefeedbackresponse', 'releasegrade',
+            'timelimit', 'submissiononlinetext', 'submissionfile', 'maxfiles', 'maxbytes', 'acceptedfiletypes',
+            'wordlimitenabled', 'wordlimit', 'requirefeedbackresponse', 'releasegrade',
             'releasefeedback', 'timecreated', 'timemodified',
         ]);
 
@@ -44,6 +46,7 @@ class backup_processassign_activity_structure_step extends backup_activity_struc
             $submission->annotate_ids('user', 'userid');
             $submission->annotate_ids('user', 'gradedby');
             $submission->annotate_files('mod_processassign', 'submission', 'id');
+            $submission->annotate_files('mod_processassign', 'feedback', 'id');
         }
 
         $processassign->annotate_files('mod_processassign', 'intro', null);

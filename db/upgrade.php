@@ -134,5 +134,49 @@ function xmldb_processassign_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026052203, 'processassign');
     }
 
+    if ($oldversion < 2026052900) {
+        $table = new xmldb_table('processassign');
+        $fields = [
+            new xmldb_field('feedbackcomments', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '1', 'maxbytes'),
+            new xmldb_field('feedbackfiles', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0', 'feedbackcomments'),
+            new xmldb_field('feedbackmaxfiles', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '5', 'feedbackfiles'),
+            new xmldb_field('feedbackmaxbytes', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'feedbackmaxfiles'),
+        ];
+        foreach ($fields as $field) {
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+
+        $stagestable = new xmldb_table('processassign_stages');
+        $stagefields = [
+            new xmldb_field('submissiononlinetext', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '1', 'timelimit'),
+            new xmldb_field('submissionfile', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '1', 'submissiononlinetext'),
+            new xmldb_field('maxfiles', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '5', 'submissionfile'),
+            new xmldb_field('maxbytes', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'maxfiles'),
+            new xmldb_field('acceptedfiletypes', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, '*', 'maxbytes'),
+        ];
+        foreach ($stagefields as $field) {
+            if (!$dbman->field_exists($stagestable, $field)) {
+                $dbman->add_field($stagestable, $field);
+            }
+        }
+
+        $DB->execute("UPDATE {processassign_stages}
+                         SET submissiononlinetext = 1
+                       WHERE submissiononlinetext IS NULL");
+        $DB->execute("UPDATE {processassign_stages}
+                         SET submissionfile = 1
+                       WHERE submissionfile IS NULL");
+        $DB->execute("UPDATE {processassign_stages}
+                         SET maxfiles = 5
+                       WHERE maxfiles IS NULL OR maxfiles = 0");
+        $DB->execute("UPDATE {processassign_stages}
+                         SET acceptedfiletypes = '*'
+                       WHERE acceptedfiletypes IS NULL OR acceptedfiletypes = ''");
+
+        upgrade_mod_savepoint(true, 2026052900, 'processassign');
+    }
+
     return true;
 }

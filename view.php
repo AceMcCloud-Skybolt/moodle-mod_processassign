@@ -41,12 +41,6 @@ $editoroptions = [
     'maxbytes' => $course->maxbytes,
     'context' => $context,
 ];
-$filemanageroptions = [
-    'subdirs' => 0,
-    'maxbytes' => !empty($processassign->maxbytes) ? $processassign->maxbytes : $course->maxbytes,
-    'maxfiles' => !empty($processassign->maxfiles) ? $processassign->maxfiles : 5,
-    'accepted_types' => '*',
-];
 
 function processassign_get_stages($processassignid) {
     global $DB;
@@ -115,6 +109,46 @@ function processassign_render_submission($submission, $context) {
     return $html ?: $OUTPUT->notification(get_string('nothingtodisplay'), 'info');
 }
 
+function processassign_render_feedback_files($submission, $context) {
+    $fs = get_file_storage();
+    $files = $fs->get_area_files($context->id, 'mod_processassign', 'feedback', $submission->id, 'filename', false);
+    if (!$files) {
+        return '';
+    }
+
+    $items = [];
+    foreach ($files as $file) {
+        $url = moodle_url::make_pluginfile_url($context->id, 'mod_processassign', 'feedback', $submission->id,
+            $file->get_filepath(), $file->get_filename());
+        $items[] = html_writer::link($url, s($file->get_filename()));
+    }
+
+    return html_writer::div(html_writer::alist($items), 'mt-2 alert alert-secondary');
+}
+
+function processassign_stage_requirements_html($stage): string {
+    $items = [];
+    if (!empty($stage->submissiononlinetext)) {
+        $items[] = html_writer::span(get_string('onlinetext', 'assignsubmission_onlinetext'),
+            'badge bg-light text-dark border me-1');
+    }
+    if (!empty($stage->submissionfile)) {
+        $items[] = html_writer::span(get_string('filesubmissions', 'assign'), 'badge bg-light text-dark border me-1');
+        $items[] = html_writer::span(get_string('maxfiles', 'assignsubmission_file') . ': ' . (int)$stage->maxfiles,
+            'badge bg-light text-dark border me-1');
+        if (!empty($stage->acceptedfiletypes) && $stage->acceptedfiletypes !== '*') {
+            $items[] = html_writer::span(get_string('acceptedfiletypes', 'assignsubmission_file') . ': ' .
+                s($stage->acceptedfiletypes), 'badge bg-light text-dark border me-1');
+        }
+    }
+    if (!empty($stage->wordlimitenabled) && !empty($stage->wordlimit)) {
+        $items[] = html_writer::span(get_string('wordlimit', 'assignsubmission_onlinetext') . ': ' . (int)$stage->wordlimit,
+            'badge bg-light text-dark border me-1');
+    }
+
+    return $items ? implode('', $items) : '-';
+}
+
 function processassign_render_student_history($stages, $submissions, $context) {
     global $OUTPUT;
 
@@ -140,6 +174,7 @@ function processassign_render_student_history($stages, $submissions, $context) {
                 $details .= html_writer::div(format_text($submission->feedback, $submission->feedbackformat),
                     'mt-2 alert alert-info');
             }
+            $details .= processassign_render_feedback_files($submission, $context);
             if (!empty($submission->feedbackresponse)) {
                 $details .= html_writer::div(format_text($submission->feedbackresponse, $submission->feedbackresponseformat),
                     'mt-2 alert alert-secondary');
@@ -163,12 +198,62 @@ function processassign_render_student_history($stages, $submissions, $context) {
 }
 
 function processassign_render_student_view($processassign, $cm, $course, $context, $stages, $canSubmit, $editoroptions,
-        $filemanageroptions, $editstageid) {
+        $editstageid) {
     global $DB, $OUTPUT, $PAGE, $USER;
 
     $submissions = processassign_get_student_submissions($processassign->id, $USER->id);
     $unlocked = true;
     $formrendered = false;
+    $completedstages = 0;
+    $currentstageindex = 1;
+    $totalstages = count($stages);
+    $currentstatus = get_string('notstarted', 'processassign');
+    $currentaction = get_string('studentactionsubmit', 'processassign');
+
+    $index = 0;
+    foreach ($stages as $stageforprogress) {
+        $index++;
+        $currentsubmission = null;
+        foreach ($submissions as $studentsubmission) {
+            if ((int)$studentsubmission->stageid === (int)$stageforprogress->id) {
+                $currentsubmission = $studentsubmission;
+                break;
+            }
+        }
+        if (processassign_stage_complete($stageforprogress, $currentsubmission)) {
+            $completedstages++;
+            continue;
+        }
+        $currentstageindex = $index;
+        $currentstatus = processassign_stage_status_label($stageforprogress, $currentsubmission);
+        if ($currentsubmission && (int)$currentsubmission->status === PROCESSASSIGN_STATUS_SUBMITTED) {
+            $currentaction = get_string('studentactionwaitfeedback', 'processassign');
+        } else if ($currentsubmission && (int)$currentsubmission->status === PROCESSASSIGN_STATUS_GRADED
+                && !empty($stageforprogress->requirefeedbackresponse) && empty($currentsubmission->timefeedbackresponded)) {
+            $currentaction = get_string('studentactionfeedbackresponse', 'processassign');
+        } else {
+            $currentaction = get_string('studentactionsubmit', 'processassign');
+        }
+        break;
+    }
+    if ($completedstages >= $totalstages) {
+        $currentstageindex = $totalstages;
+        $currentstatus = get_string('complete');
+        $currentaction = get_string('studentactioncomplete', 'processassign');
+    }
+
+    echo html_writer::start_div('alert alert-light border mb-4');
+    echo $OUTPUT->heading(get_string('studentprogress', 'processassign'), 4, 'mb-2');
+    echo html_writer::div(get_string('studentprogressvalue', 'processassign',
+        (object)['current' => $currentstageindex, 'total' => $totalstages]), 'mb-1');
+    echo html_writer::div(get_string('status', 'processassign') . ': ' . s($currentstatus), 'mb-1');
+    echo html_writer::div(get_string('studentaction', 'processassign') . ': ' . s($currentaction), 'fw-semibold');
+    echo html_writer::tag('details',
+        html_writer::tag('summary', get_string('howprocessworks', 'processassign')) .
+        html_writer::div(get_string('howprocessworksdesc', 'processassign'), 'mt-2'),
+        ['class' => 'mt-3']
+    );
+    echo html_writer::end_div();
 
     processassign_render_student_history($stages, $submissions, $context);
     echo $OUTPUT->heading(get_string('stages', 'processassign'), 3);
@@ -197,6 +282,8 @@ function processassign_render_student_view($processassign, $cm, $course, $contex
             echo html_writer::div(get_string('wordlimit', 'assignsubmission_onlinetext') . ': ' . $stage->wordlimit,
                 'small text-muted');
         }
+        echo html_writer::div(get_string('submissionrequirements', 'processassign') . ': ' .
+            processassign_stage_requirements_html($stage), 'small mt-2');
         echo html_writer::div(get_string('status', 'processassign') . ': ' .
             processassign_stage_status_label($stage, $submission), 'mt-2');
 
@@ -206,6 +293,7 @@ function processassign_render_student_view($processassign, $cm, $course, $contex
             if (!empty($submission->feedback)) {
                 echo html_writer::div(format_text($submission->feedback, $submission->feedbackformat), 'mt-2 alert alert-info');
             }
+            echo processassign_render_feedback_files($submission, $context);
             if (!empty($submission->feedbackresponse)) {
                 echo html_writer::tag('h5', get_string('feedbackresponse', 'processassign'), ['class' => 'mt-3']);
                 echo html_writer::div(format_text($submission->feedbackresponse, $submission->feedbackresponseformat),
@@ -221,12 +309,20 @@ function processassign_render_student_view($processassign, $cm, $course, $contex
             || ((int)$submission->status === PROCESSASSIGN_STATUS_SUBMITTED && (int)$editstageid === (int)$stage->id);
 
         if (!$unlocked) {
+            $lockreason = get_string('lockreason:previousstage', 'processassign');
+            if ($submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED
+                    && !empty($stage->requirefeedbackresponse) && empty($submission->timefeedbackresponded)) {
+                $lockreason = get_string('lockreason:feedbackresponse', 'processassign');
+            }
             echo $OUTPUT->notification(get_string('notopenyet', 'processassign'), 'info');
+            echo html_writer::div($lockreason, 'small text-muted');
         } else if ($beforeopen) {
             echo $OUTPUT->notification(get_string('submissionsnotopen', 'processassign',
                 userdate($processassign->allowsubmissionsfromdate)), 'info');
+            echo html_writer::div(get_string('lockreason:availability', 'processassign'), 'small text-muted');
         } else if ($aftercutoff || $afterstagedue) {
             echo $OUTPUT->notification(get_string('submissionsclosed', 'processassign'), 'warning');
+            echo html_writer::div(get_string('lockreason:cutoff', 'processassign'), 'small text-muted');
         } else if ($canSubmit && !$formrendered && $submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED
                 && !empty($stage->requirefeedbackresponse) && empty($submission->timefeedbackresponded)) {
             echo $OUTPUT->heading(get_string('feedbackresponserequired', 'processassign'), 5);
@@ -265,6 +361,12 @@ function processassign_render_student_view($processassign, $cm, $course, $contex
 
             $draftitemid = file_get_submitted_draft_itemid('submissionfiles');
             $itemid = $submission ? $submission->id : 0;
+            $filemanageroptions = [
+                'subdirs' => 0,
+                'maxbytes' => !empty($stage->maxbytes) ? $stage->maxbytes : $course->maxbytes,
+                'maxfiles' => !empty($stage->maxfiles) ? $stage->maxfiles : 5,
+                'accepted_types' => !empty($stage->acceptedfiletypes) ? $stage->acceptedfiletypes : '*',
+            ];
             file_prepare_draft_area($draftitemid, $context->id, 'mod_processassign', 'submission', $itemid,
                 $filemanageroptions);
 
@@ -276,13 +378,13 @@ function processassign_render_student_view($processassign, $cm, $course, $contex
             $formdata = [
                 'stageid' => $stage->id,
             ];
-            if (!empty($processassign->submissiononlinetext)) {
+            if (!empty($stage->submissiononlinetext)) {
                 $formdata['submissioneditor'] = [
                     'text' => $submission->submissiontext ?? '',
                     'format' => $submission->submissionformat ?? FORMAT_HTML,
                 ];
             }
-            if (!empty($processassign->submissionfile)) {
+            if (!empty($stage->submissionfile)) {
                 $formdata['submissionfiles'] = $draftitemid;
             }
             $mform->set_data($formdata);
@@ -310,7 +412,7 @@ function processassign_render_student_view($processassign, $cm, $course, $contex
                     $submissionid = $DB->insert_record('processassign_subs', $record);
                 }
 
-                if (!empty($processassign->submissionfile)) {
+                if (!empty($stage->submissionfile)) {
                     file_save_draft_area_files($data->submissionfiles, $context->id, 'mod_processassign', 'submission',
                         $submissionid, $filemanageroptions);
                 }
@@ -328,6 +430,13 @@ function processassign_render_student_view($processassign, $cm, $course, $contex
 
         echo html_writer::end_div();
         echo html_writer::end_div();
+
+        if ($submission && (int)$submission->status === PROCESSASSIGN_STATUS_SUBMITTED && !empty($submission->timesubmitted)) {
+            echo html_writer::start_div('alert alert-success mt-n2 mb-3');
+            echo html_writer::tag('strong', get_string('submissionreceipt', 'processassign')) . ': ' .
+                userdate($submission->timesubmitted);
+            echo html_writer::end_div();
+        }
 
         $unlocked = processassign_stage_complete($stage, $submission);
     }
@@ -665,6 +774,7 @@ function processassign_render_teacher_table($processassign, $cm, $context, $stag
         get_string('submissionfiles', 'processassign'),
         get_string('submissiontext', 'processassign'),
         get_string('feedback', 'processassign'),
+        get_string('feedbackfiles', 'assignfeedback_file'),
         get_string('feedbackresponse', 'processassign'),
         get_string('submissionactions', 'processassign'),
         get_string('gradeactions', 'processassign'),
@@ -692,6 +802,7 @@ function processassign_render_teacher_table($processassign, $cm, $context, $stag
             $submissionfiles = '-';
             $submissiontext = '-';
             $feedback = '-';
+            $feedbackfiles = '-';
             $feedbackresponse = '-';
             if ($submission) {
                 $gradeurl = new moodle_url('/mod/processassign/view.php', [
@@ -745,6 +856,10 @@ function processassign_render_teacher_table($processassign, $cm, $context, $stag
                     $feedback = html_writer::div(format_text($submission->feedback, $submission->feedbackformat),
                         'processassign-table-text small');
                 }
+                $feedbackfileshtml = processassign_render_feedback_files($submission, $context);
+                if ($feedbackfileshtml !== '') {
+                    $feedbackfiles = $feedbackfileshtml;
+                }
                 if (!empty($submission->feedbackresponse)) {
                     $feedbackresponse = html_writer::div(format_text($submission->feedbackresponse,
                         $submission->feedbackresponseformat), 'processassign-table-text small');
@@ -775,6 +890,7 @@ function processassign_render_teacher_table($processassign, $cm, $context, $stag
                 $submissionfiles,
                 $submissiontext,
                 $feedback,
+                $feedbackfiles,
                 $feedbackresponse,
                 $submissionactions ? processassign_render_action_menu(get_string('submissionactions', 'processassign'),
                     $submissionactions) : '-',
@@ -940,11 +1056,22 @@ function processassign_handle_grade_view($processassign, $cm, $course, $context,
         'submissionid' => $submissionid,
     ]);
 
+    $feedbackfilemanageroptions = [
+        'subdirs' => 0,
+        'maxbytes' => !empty($processassign->feedbackmaxbytes) ? (int)$processassign->feedbackmaxbytes : $course->maxbytes,
+        'maxfiles' => !empty($processassign->feedbackmaxfiles) ? (int)$processassign->feedbackmaxfiles : 5,
+        'accepted_types' => '*',
+    ];
+    $feedbackdraftitemid = file_get_submitted_draft_itemid('feedbackfiles');
+    file_prepare_draft_area($feedbackdraftitemid, $context->id, 'mod_processassign', 'feedback', (int)$submission->id,
+        $feedbackfilemanageroptions);
+
     $mform = new \mod_processassign\form\grade_form($formurl, [
         'stage' => $stage,
+        'processassign' => $processassign,
         'gradinginstance' => $gradinginstance,
         'showshownext' => $graderworkflow,
-        'options' => ['editor' => $editoroptions],
+        'options' => ['editor' => $editoroptions, 'feedbackfilemanager' => $feedbackfilemanageroptions],
     ]);
     $mform->set_data([
         'submissionid' => $submission->id,
@@ -954,6 +1081,7 @@ function processassign_handle_grade_view($processassign, $cm, $course, $context,
             'text' => $submission->feedback ?? '',
             'format' => FORMAT_HTML,
         ],
+        'feedbackfiles' => $feedbackdraftitemid,
     ]);
 
     if ($data = $mform->get_data()) {
@@ -962,13 +1090,19 @@ function processassign_handle_grade_view($processassign, $cm, $course, $context,
         } else {
             $submission->grade = $data->grade;
         }
-        $submission->feedback = $data->feedback['text'];
-        $submission->feedbackformat = $data->feedback['format'];
+        if (!empty($processassign->feedbackcomments)) {
+            $submission->feedback = $data->feedback['text'];
+            $submission->feedbackformat = $data->feedback['format'];
+        }
         $submission->status = PROCESSASSIGN_STATUS_GRADED;
         $submission->gradedby = $USER->id;
         $submission->timegraded = time();
         $submission->timemodified = time();
         $DB->update_record('processassign_subs', $submission);
+        if (!empty($processassign->feedbackfiles) && isset($data->feedbackfiles)) {
+            file_save_draft_area_files($data->feedbackfiles, $context->id, 'mod_processassign', 'feedback',
+                $submission->id, $feedbackfilemanageroptions);
+        }
         processassign_update_grades($processassign, $submission->userid);
         if (!empty($data->notifystudent)) {
             processassign_notify_student($processassign, $cm, $course, $stage, $student);
@@ -998,7 +1132,7 @@ function processassign_handle_grade_view($processassign, $cm, $course, $context,
     }
     echo $OUTPUT->heading(fullname($student), 2, 'mb-1');
     echo html_writer::div(s($student->email), 'text-muted mb-1');
-    echo html_writer::div(format_string($stage->name) . ' · ' . get_string('duedate', 'processassign') . ': ' .
+    echo html_writer::div(format_string($stage->name) . ' - ' . get_string('duedate', 'processassign') . ': ' .
         (processassign_stage_due_date($processassign, $stage) ? userdate(processassign_stage_due_date($processassign, $stage)) :
             '-'), 'text-muted mb-4');
     echo $OUTPUT->heading(get_string('submissionstatussummary', 'processassign'), 3);
@@ -1032,6 +1166,9 @@ if ($action === 'grader') {
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(format_string($processassign->name));
+if ($canGrade) {
+    processassign_update_grades($processassign);
+}
 if (!empty($processassign->alwaysshowdescription)
         || empty($processassign->allowsubmissionsfromdate)
         || time() >= $processassign->allowsubmissionsfromdate
@@ -1051,7 +1188,7 @@ if (!$stages) {
         }
     } else if ($canSubmit) {
         processassign_render_student_view($processassign, $cm, $course, $context, $stages, $canSubmit, $editoroptions,
-            $filemanageroptions, $editstageid);
+            $editstageid);
     }
 }
 

@@ -128,6 +128,8 @@ class provider implements
                 writer::with_context($context)->export_data($subcontext, $data);
                 writer::with_context($context)->export_area_files($subcontext, 'mod_processassign', 'submission',
                     $submission->id);
+                writer::with_context($context)->export_area_files($subcontext, 'mod_processassign', 'feedback',
+                    $submission->id);
             }
         }
     }
@@ -205,6 +207,7 @@ class provider implements
         $fs = get_file_storage();
         foreach ($submissionids as $submissionid) {
             $fs->delete_area_files($context->id, 'mod_processassign', 'submission', $submissionid);
+            $fs->delete_area_files($context->id, 'mod_processassign', 'feedback', $submissionid);
         }
     }
 }

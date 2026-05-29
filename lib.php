@@ -71,16 +71,17 @@ function processassign_extend_settings_navigation(settings_navigation $settings,
         return;
     }
 
-    if ($modulepagenode = $navref->get('modulepage')) {
-        $modulepagenode->remove();
-    }
-    $page->requires->css('/mod/processassign/styles.css');
-
     $url = new moodle_url('/mod/processassign/view.php', [
         'id' => $cm->id,
         'action' => 'submissions',
         'statusfilter' => 'all',
     ]);
+    $page->requires->css('/mod/processassign/styles.css');
+    if ($modulepagenode = $navref->get('modulepage')) {
+        $modulepagenode->text = get_string('submissions', 'processassign');
+        $modulepagenode->action = $url;
+        return;
+    }
     $navref->add(
         text: get_string('submissions', 'processassign'),
         action: $url,
@@ -141,6 +142,10 @@ function processassign_normalise_settings($data) {
     $data->submissionfile = !empty($data->submissionfile) ? 1 : 0;
     $data->maxfiles = max(1, (int)($data->maxfiles ?? 5));
     $data->maxbytes = (int)($data->maxbytes ?? 0);
+    $data->feedbackcomments = !empty($data->feedbackcomments) ? 1 : 0;
+    $data->feedbackfiles = !empty($data->feedbackfiles) ? 1 : 0;
+    $data->feedbackmaxfiles = max(1, (int)($data->feedbackmaxfiles ?? 5));
+    $data->feedbackmaxbytes = (int)($data->feedbackmaxbytes ?? 0);
     $data->wordlimitenabled = !empty($data->wordlimitenabled) ? 1 : 0;
     $data->wordlimit = max(0, (int)($data->wordlimit ?? 0));
     $data->sendnotifications = !empty($data->sendnotifications) ? 1 : 0;
@@ -200,6 +205,11 @@ function processassign_save_stages($processassignid, $data) {
         $maxgrade = max(0, (int)($data->{'stage' . $i . 'maxgrade'} ?? 0));
         $duedate = (int)($data->{'stage' . $i . 'duedate'} ?? 0);
         $timelimit = max(0, (int)($data->{'stage' . $i . 'timelimit'} ?? 0));
+        $submissiononlinetext = !empty($data->{'stage' . $i . 'submissiononlinetext'}) ? 1 : 0;
+        $submissionfile = !empty($data->{'stage' . $i . 'submissionfile'}) ? 1 : 0;
+        $maxfiles = max(1, (int)($data->{'stage' . $i . 'maxfiles'} ?? 5));
+        $maxbytes = (int)($data->{'stage' . $i . 'maxbytes'} ?? 0);
+        $acceptedfiletypes = clean_param($data->{'stage' . $i . 'acceptedfiletypes'} ?? '*', PARAM_RAW_TRIMMED);
         $wordlimitenabled = !empty($data->{'stage' . $i . 'wordlimitenabled'}) ? 1 : 0;
         $wordlimit = max(0, (int)($data->{'stage' . $i . 'wordlimit'} ?? 0));
         $requirefeedbackresponse = !empty($data->{'stage' . $i . 'requirefeedbackresponse'}) ? 1 : 0;
@@ -223,6 +233,11 @@ function processassign_save_stages($processassignid, $data) {
             'maxgrade' => $maxgrade,
             'duedate' => $duedate,
             'timelimit' => $timelimit,
+            'submissiononlinetext' => $submissiononlinetext,
+            'submissionfile' => $submissionfile,
+            'maxfiles' => $maxfiles,
+            'maxbytes' => $maxbytes,
+            'acceptedfiletypes' => $acceptedfiletypes === '' ? '*' : $acceptedfiletypes,
             'wordlimitenabled' => $wordlimitenabled,
             'wordlimit' => $wordlimit,
             'requirefeedbackresponse' => $requirefeedbackresponse,
@@ -508,7 +523,7 @@ function processassign_get_user_grade($processassign, $userid) {
 function processassign_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = []) {
     global $DB, $USER;
 
-    if ($context->contextlevel != CONTEXT_MODULE || $filearea !== 'submission') {
+    if ($context->contextlevel != CONTEXT_MODULE || !in_array($filearea, ['submission', 'feedback'], true)) {
         return false;
     }
 
