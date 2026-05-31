@@ -8,8 +8,7 @@ The goal is to support assessment designs where students submit evidence in mult
 
 - Course activity type: **Process assignment**.
 - Up to five ordered stages per activity.
-- Stage settings: name, instructions, maximum grade, due date.
-- Stage settings also include optional online text word limit.
+- Stage settings: name, instructions, maximum grade, due date, online text, file submissions, file limits, accepted file types, and optional word limit.
 - Stage types: custom, proposal, outline, draft, revision plan, reflection, research log, media prototype, final submission.
 - Default stage prompts are supplied when a stage type is selected and instructions are left blank.
 - Optional feedback-response gate: students can be required to respond to feedback before the next stage unlocks.
@@ -64,6 +63,24 @@ php admin/cli/purge_caches.php
 ```
 
 The activity should then appear in the Moodle activity picker as **Process assignment**.
+
+## Screenshots
+
+These screenshots show the current prototype in a Moodle sandbox with sample staged submissions.
+
+![Full submissions dashboard](docs/screenshots/01-dashboard-overview.png)
+
+![Submissions dashboard filters and stage-aware rows](docs/screenshots/02-submissions-dashboard.png)
+
+![Feedback response queue](docs/screenshots/03-feedback-response-queue.png)
+
+![Stage grading workflow](docs/screenshots/04-stage-grader.png)
+
+![Per-stage configuration](docs/screenshots/05-stage-configuration.png)
+
+![Gradebook integration](docs/screenshots/06-gradebook-integration.png)
+
+![Student workflow](docs/screenshots/07-student-workflow.png)
 
 ## Suggested smoke test
 
