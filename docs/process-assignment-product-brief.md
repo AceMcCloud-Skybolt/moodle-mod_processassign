@@ -1,248 +1,361 @@
-# Process Assignment product brief
+# Process Assignment Product Brief
 
-## Purpose
+## Purpose of this document
 
-Process Assignment is a proposed Moodle activity for staged, process-oriented assessment. It is intended for assignments where the learning process matters as much as the final artefact: students submit work in planned stages, receive feedback, respond or revise, and progressively unlock later stages before a final grade is completed.
+This brief explains the educational and operational rationale for a Moodle-native **Process assignment** activity. It is intended to help developers, learning designers, academics, and support staff critique the concept before becoming buried in implementation detail.
 
-The prototype in this repository is not intended to be production-ready. It exists to make the idea concrete enough for developers, learning designers, academic staff, and LMS administrators to critique the workflow, requirements, and Moodle architecture.
+The current GitHub prototype demonstrates one possible direction. This document describes the underlying problem, target use cases, minimum viable requirements, and key architecture questions.
 
-## Why this is needed
+## Problem Statement
 
-Many university assessments still operate as a single final submission: students upload a finished artefact, the teacher grades it, and the mark flows to the gradebook. That model is simple and familiar, but it can hide the learning process.
+Universities increasingly need assessment designs that make student learning processes visible, not just final artefacts. This need has become more urgent with the widespread availability of generative AI tools.
 
-Generative AI has made this gap more visible. If assessment relies heavily on a final artefact, staff may have limited evidence of how the student developed the work, responded to feedback, made decisions, or demonstrated discipline-specific thinking over time.
+Traditional assignment submission often captures only the final product: a file upload, online text, or media artefact. Staff then grade that artefact and the result flows into the Gradebook. This model can still work for many tasks, but it is less effective when educators want to assess how students planned, drafted, responded to feedback, revised, reflected, and developed their work over time.
 
-At the same time, many good pedagogical responses to AI are not really about detecting AI. They are about designing richer assessment processes:
+Process-focused assessment supports better teaching because it creates structured feedback loops. Students submit interim evidence, receive feedback while there is still time to act on it, and demonstrate how they used that feedback in later work. Staff can identify misunderstandings earlier and support students before the final deadline.
 
-- proposals before final submissions
-- outlines before essays
-- research logs before reports
-- storyboards before videos
-- rough cuts before final media
-- revision plans after feedback
-- reflections on decisions, changes, and learning
+The product goal is not simply to add more submissions. The goal is to make staged learning visible, assessable, and manageable inside Moodle.
 
-Moodle already has many pieces of this puzzle, but they are spread across Assignment attempts, Workshop, Rubrics, Marking guides, Completion, Gradebook, Reports, Notifications, Groups, and manual teacher workflows. Process Assignment explores whether a single activity could make this pattern easier for staff and students.
+## Current Moodle Gap
 
-## Problems this aims to solve
+Moodle Assignment already supports useful features such as attempts, due dates, file submissions, online text, feedback, rubrics, marking guides, and Gradebook integration. However, it does not provide a clear staged workflow where each milestone can have its own instructions, submission window, feedback, grading method, unlock condition, and student response requirement.
 
-### 1. Single-submission assessment hides process evidence
+Current workarounds usually involve one of the following:
 
-Normal Assignment can collect a final artefact well, but the process leading to that artefact is often invisible or managed outside Moodle. Staff may not see early misunderstandings, late starts, weak planning, or whether feedback was actually used.
+- Creating several separate Assignment activities, one for each milestone.
+- Using one Assignment with multiple attempts, but relying on instructions and manual interpretation to distinguish stages.
+- Creating a Gradebook category manually and placing several Assignment activities inside it.
+- Combining Assignment with Forums, Workshops, Journals, Checklists, or external tools.
+- Tracking student progress manually through spreadsheets, email, or ad hoc Moodle reports.
 
-### 2. Existing Moodle workarounds are fragmented
+These workarounds can function, but they fragment the experience. Students see multiple activities instead of one coherent process. Staff must manage multiple grade items, dates, instructions, and feedback points. Learning designers and support teams often need to explain the setup repeatedly.
 
-Staff can approximate staged assessment by creating multiple Assignment activities, manually arranging grade categories, setting completion restrictions, and writing instructions that explain the sequence. This works, but it is fiddly. It also creates extra gradebook complexity, which many staff already find difficult.
+A Process assignment should preserve the familiar Moodle Assignment mental model while adding explicit stages.
 
-### 3. Attempts are not the same as meaningful stages
+## Why Not External Tools?
 
-Assignment attempts can support resubmission, but attempts are usually versions of the same submission, not intentionally different milestones with separate instructions, criteria, feedback, and pedagogical purpose.
+External platforms can provide polished staged-assessment workflows, but they introduce practical and strategic costs:
 
-### 4. External platforms create friction
+- **Licensing cost:** commercial tools may be expensive, especially at institutional scale.
+- **Training burden:** staff and students must learn another platform and another workflow.
+- **Student friction:** students are pushed outside the LMS, often for a core assessment task.
+- **Single sign-on and integration overhead:** authentication, enrolment, groups, and role mapping require configuration and maintenance.
+- **Gradebook complexity:** grades and feedback may need to sync back into Moodle, or staff must manually transfer marks.
+- **Data governance:** student submissions, feedback, media, and learning-process evidence may sit outside existing Moodle governance arrangements.
+- **Support burden:** university support teams must troubleshoot a second system and decide where responsibility sits.
 
-Platforms such as Cadmus demonstrate the value of process-based assessment, but external systems can add cost, procurement work, SSO complexity, privacy review, staff training, student training, and support burden. A Moodle-native approach keeps assessment inside the existing LMS ecosystem.
+The strategic argument for a Moodle-native solution is that staged process assessment should feel like part of the LMS, not an add-on bolted beside it.
 
-### 5. Feedback loops are often incomplete
+## Target Users
 
-Feedback is most useful when students must do something with it. A staged workflow can require students to read, acknowledge, respond to, or apply feedback before moving on. This makes feedback part of the assessment design rather than a comment at the end.
+### Academics and Unit Coordinators
 
-## Target users
+Academics need to design assessment tasks that guide students through a process, provide timely feedback, and keep grading manageable. They need setup options that are powerful but not overwhelming.
 
-### Academic staff
+### Tutors and Markers
 
-Need a simple way to design staged assignments without manually constructing several Moodle activities and gradebook items.
-
-### Tutors and markers
-
-Need a clear dashboard showing who is waiting for feedback, who is late, who needs a nudge, and where each student is in the process.
+Tutors need a clear view of who has submitted each stage, who needs feedback, who is waiting for feedback release, and who has responded to feedback. They need stage-aware grading workflows without needing to decode multiple separate activities.
 
 ### Students
 
-Need a clear timeline of what is due, what is locked, what feedback has been received, what action is required next, and how each stage contributes to the overall assessment.
+Students need a clear timeline of what is due, what has been submitted, what feedback has been received, what they need to respond to, and what unlocks next. The activity should reduce uncertainty and support planning.
 
-### Learning designers
+### Learning Designers
 
-Need reusable staged-assignment patterns aligned to good pedagogy, such as proposal-to-draft-to-final, research-log-to-report, storyboard-to-media, or reflection-based assessment.
+Learning designers need a Moodle-native pattern they can recommend across disciplines. They need reusable examples, stage templates, and a workflow that supports scaffolded learning without requiring extensive bespoke configuration.
 
-### LMS administrators and developers
+### Moodle Administrators and Support Staff
 
-Need the activity to respect Moodle conventions for gradebook, completion, advanced grading, backup/restore, privacy, capabilities, groups, accessibility, and maintainability.
+Administrators need a plugin that fits Moodle conventions: capabilities, privacy API, backup/restore, Gradebook integration, activity completion, logs, events, message providers, and upgrade safety.
 
-## Example use cases
+## Core Use Cases
 
-### Essay development
+### Essay Development
 
-A student submits a thesis statement, then an outline, then a draft, then a final essay. The thesis statement receives low-stakes feedback and a small grade. The final essay carries most of the marks.
+A student submits a thesis statement or introduction, receives feedback, responds to that feedback, and then unlocks a draft or final essay stage. The design encourages early thinking and revision instead of a single final upload.
 
-### Research report
+Example sequence:
 
-A student submits a research question, then an annotated bibliography, then a methods plan, then a draft report, then the final report. Staff can catch weak research direction early.
+1. Thesis statement.
+2. Introduction draft.
+3. Full draft.
+4. Revision plan.
+5. Final essay.
 
-### Media project
+### Research Proposal
 
-A student submits a proposal, storyboard, rough cut, and final video. Feedback is targeted at each stage, and students can record audio or video reflections using Moodle's editor/media tools where available.
+A student builds a proposal in stages, allowing staff to identify weak research questions or unsuitable methods before the final submission.
 
-### Design or prototype project
+Example sequence:
 
-A student submits a problem definition, sketches, prototype, user feedback summary, and final design. The assessment captures iteration and decision-making rather than only the final product.
+1. Background/problem statement.
+2. Proposed research question.
+3. Annotated bibliography.
+4. Method or project plan.
+5. Final proposal.
 
-### Reflective professional practice
+### Project-Based Learning
 
-A student submits staged reflections, evidence logs, or workplace learning artefacts. Feedback can require a student response before the next reflection opens.
+Students submit evidence of planning, prototyping, testing, refinement, and final output. Staff can grade the process as well as the final artefact.
 
-### Large first-year assignment
+Example sequence:
 
-A scaffolded process reduces anxiety and improves equity for students unfamiliar with university assessment. Students get early direction before the final deadline.
+1. Project plan.
+2. Prototype or wireframe.
+3. Feedback response.
+4. Revised prototype.
+5. Final project.
 
-### Capstone or honours-style project
+### Media and Multimodal Assessment
 
-Longer projects can be broken into structured milestones, giving supervisors and coordinators a clearer view of progress without relying entirely on informal check-ins.
+Students move from concept to storyboard to rough cut to final media artefact, with feedback opportunities before high-effort production work is complete.
 
-## Core workflow
+Example sequence:
 
-1. A teacher creates one Process Assignment activity.
-2. The teacher chooses the number of stages.
-3. Each stage has its own title, instructions, due date, submission type, file rules, word limit, maximum grade, and optionally its own advanced grading method.
-4. Students see a timeline-style view of all stages.
-5. Only the current stage is open for submission.
-6. After submitting a stage, the student waits for feedback or grading.
-7. The teacher grades the stage and gives feedback.
-8. If enabled, the student must respond to the feedback before the next stage unlocks.
-9. The final Moodle gradebook outcome is either:
-   - one aggregate grade item, like a normal Assignment, or
-   - a grade category with weighted stage items for more complex assessment designs.
+1. Concept pitch.
+2. Storyboard.
+3. Rough cut.
+4. Revision reflection.
+5. Final video, podcast, or media artefact.
 
-## Minimum viable requirements
+### Reflective Portfolio
 
-### Activity setup
+Students submit recurring pieces of evidence and reflection, showing development across a teaching period. This supports metacognition and learning transfer.
 
-- Create a Process Assignment from the Moodle activity picker.
-- Support a small fixed number of stages initially, probably three to five.
-- Provide per-stage instructions using the Moodle editor.
-- Provide per-stage online text and file submission options.
-- Provide per-stage due dates and word/file limits.
-- Provide sensible templates for common stage types, such as proposal, outline, draft, revision plan, reflection, media prototype, and final submission.
+Example sequence:
 
-### Student workflow
+1. Learning goals.
+2. Evidence checkpoint.
+3. Feedback response.
+4. Revised evidence.
+5. Final reflection.
 
-- Show all stages in a clear sequence.
-- Make the current required action obvious.
-- Lock future stages until requirements are met.
-- Close submitted stages by default, with controlled edit/resubmit behaviour.
-- Show previous submissions, feedback, grades, and feedback responses where appropriate.
-- Use Moodle editor/media features for online text where available.
+### Professional Practice or Placement Evidence
 
-### Teacher workflow
+Students can submit logs, plans, supervisor feedback, reflections, and final artefacts in a structured order. Staff can assess readiness and intervene earlier.
 
-- Show a submissions dashboard with stage-aware filters.
-- Highlight students who are not started, submitted, awaiting feedback, awaiting student response, late, or complete.
-- Provide direct actions from the dashboard, including grade, view submission, and nudge.
-- Provide a familiar grading interface that aligns with normal Assignment expectations as much as possible.
-- Support feedback comments and feedback files.
+## MVP Requirements
 
-### Grading and gradebook
+The minimum viable version should focus on a Moodle-native staged assignment workflow rather than trying to solve every process-assessment scenario.
 
-- Support one simple aggregate grade item by default.
-- Optionally support an auto-created grade category with one child grade item per stage.
-- Support per-stage maximum marks or weighting.
-- Support Moodle Advanced Grading methods, including Rubric and Marking guide, per stage.
-- Avoid making staff manually construct gradebook categories for common staged-assessment patterns.
+### Activity Setup
 
-### Moodle platform expectations
+- Staff can create a Process assignment from the Moodle activity picker.
+- Staff can configure a fixed number of ordered stages.
+- Each stage has a clear title and instructions.
+- Stage instructions support the Moodle editor.
+- Staff can configure per-stage availability, due date, and cutoff behaviour.
+- Staff can choose which submission types are enabled per stage:
+  - online text
+  - file submissions
+- Staff can configure file limits, maximum file size, accepted file types, and optional word limits where relevant.
 
-- Use Moodle capabilities and roles correctly.
-- Support backup and restore.
-- Implement privacy API coverage.
-- Respect group mode and groupings in future versions.
-- Support activity completion and course completion conventions.
-- Avoid custom UI patterns where core Moodle conventions already exist.
-- Maintain accessibility and responsive behaviour.
+### Student Workflow
 
-## Non-goals for the first serious review
+- Students see the full staged pathway, not just the current upload box.
+- Students can clearly identify:
+  - current stage
+  - completed stages
+  - locked future stages
+  - due dates
+  - feedback status
+  - next required action
+- Students submit only the currently unlocked stage.
+- Submitted stages lock down by default, with any edit/resubmit behaviour controlled by settings.
+- Students can view prior submissions and released feedback.
+- Where enabled, students must respond to feedback before the next stage unlocks.
 
-- Replacing the normal Assignment activity.
-- Building AI detection.
-- Building a full external-platform equivalent.
-- Supporting every Assignment feature immediately.
-- Solving group collaboration and peer evaluation in the same first plugin.
-- Creating complex analytics before the core workflow is sound.
+### Feedback and Grading
 
-## Important design principles
+- Teachers can grade and provide feedback per stage.
+- Teachers can choose whether stage feedback requires a student response.
+- Teachers can use Moodle Advanced grading methods, such as Rubric and Marking guide, for each stage where feasible.
+- Teachers can see which students are:
+  - not started
+  - submitted and awaiting feedback
+  - awaiting student feedback response
+  - late
+  - complete
+- Teachers can filter or sort by stage status.
 
-### Keep it Moodle-native
+### Gradebook Integration
 
-Staff and students should feel like they are still using Moodle. The activity should reuse core patterns wherever possible: settings forms, submissions lists, gradebook, completion, advanced grading, file handling, editor behaviour, and navigation.
+The MVP should support two gradebook models:
 
-### Do not overwhelm staff
+1. **Single grade item mode:** the activity appears as one grade item in the Moodle Gradebook, similar to a normal Assignment.
+2. **Stage category mode:** the activity can create or manage a Gradebook category with one child grade item per configured stage.
 
-The activity should make staged assessment easier, not turn it into a project-management tool. Defaults, templates, and progressive disclosure are important.
+Stage category mode should support assessment patterns such as:
 
-### Make the next action obvious
+- Essay category worth 50% of a unit.
+- Thesis statement worth 10% of the essay category.
+- Final submission worth 90% of the essay category.
 
-For students, the key question is: what do I need to do next? For teachers, the key question is: who needs my attention now?
+The default should be simple and familiar. More complex gradebook structures should be optional and clearly explained.
 
-### Treat feedback as part of learning
+### Moodle Integration
 
-Feedback should not be a dead-end comment. The workflow should optionally require students to acknowledge, respond to, or apply feedback before moving forward.
+The MVP should follow Moodle conventions for:
 
-### Gradebook must remain understandable
+- capabilities
+- activity completion
+- Gradebook
+- Advanced grading
+- privacy API
+- backup and restore
+- logs/events
+- message providers
+- course index and activity navigation
+- Moodle editor and file API
 
-Gradebook complexity is a major risk. The default should be one grade item. More complex stage-category behaviour should be optional, explicit, and easy to explain.
+## Future and Non-MVP Ideas
 
-## Open questions for developers
+These ideas are valuable but should not distract from proving the core staged assignment model.
+
+### Stage Templates
+
+Provide reusable templates for common assessment designs:
+
+- essay draft sequence
+- research proposal
+- media project
+- reflective portfolio
+- design prototype
+- lab report
+
+Templates should scaffold setup but remain editable.
+
+### Peer Review
+
+Peer review could be added as a stage type or optional stage activity. This may overlap with Moodle Workshop, so the design would need careful scoping.
+
+### Analytics Dashboard
+
+A dashboard could highlight bottlenecks and risk signals:
+
+- many students stuck on one stage
+- overdue feedback
+- students repeatedly late
+- students who have not responded to feedback
+- stages with unusually low grades
+
+The dashboard should include actions, not just reports. For example, staff should be able to nudge students or filter directly to a marking queue.
+
+### Nudges and Messaging
+
+Teachers could send Moodle messages to students based on stage status. This should use Moodle message providers rather than direct email in a production version.
+
+### Group Process Assignments
+
+There may be a future relationship with a group assignment workflow where groups move through staged submissions together. This should be treated as related but separate until the individual process assignment model is stable.
+
+### Process Evidence Integrations
+
+Possible integrations could include writing analytics, version history, media capture, external repositories, or tools such as writing-process detection systems. These should be treated carefully due to privacy, ethics, governance, and student trust considerations.
+
+### AI Transparency and Reflection
+
+The activity could include structured reflection prompts about how students used tools, feedback, research, collaboration, and revision. This may be more pedagogically useful than attempting to detect AI use.
+
+## Non-Goals for MVP
+
+The MVP should not attempt to:
+
+- replicate every feature of Moodle Assignment immediately
+- replace Moodle Workshop
+- replace full portfolio tools
+- automatically detect generative AI use
+- automatically judge whether a student's process is authentic
+- create complex grade redistribution formulas
+- become a general workflow engine for all activities
+- solve group assignment management at the same time
+
+The first goal is a robust, understandable, Moodle-native staged assignment.
+
+## Pedagogical Rationale
+
+A staged assignment supports:
+
+- formative feedback loops
+- scaffolded learning
+- revision and metacognition
+- earlier identification of misunderstandings
+- reduced student anxiety
+- greater equity for students unfamiliar with the task genre
+- clearer expectations
+- authentic professional workflows
+
+The activity should encourage students to treat feedback as part of learning, not as a final judgement after the work is already complete.
+
+The most important design principle is that feedback should require or invite action. A feedback response gate is valuable because it closes the loop: students acknowledge, interpret, or respond to feedback before continuing.
+
+## Questions for Developers
 
 ### Architecture
 
-- Should this be a standalone activity module, as prototyped, or should some/all functionality be implemented as Assignment subplugins?
-- Is a fixed maximum number of stages acceptable for a first production version, or does the architecture need truly dynamic stages from the start?
-- What is the cleanest Moodle-native way to support stage-level advanced grading areas?
+- Should this remain a standalone activity module, or should it be implemented as extensions to core Assignment?
+- If standalone, which Assignment behaviours must be copied, reused, or intentionally omitted?
+- Can stage-level submissions and grading be modelled cleanly within Moodle's existing grading and advanced grading APIs?
+
+### Advanced Grading
+
+- What is the best architecture for per-stage Rubric and Marking guide support?
+- Should each stage be a separate advanced grading area?
+- Can the number of stage grading areas be dynamic, or must it remain bounded?
+- How should advanced grading data be stored, restored, and exported?
 
 ### Gradebook
 
-- Is the optional auto-created grade category model technically safe and maintainable?
-- Should stage weights be represented by maximum marks, explicit weights, or gradebook aggregation settings?
-- How should the activity behave if teachers manually alter the generated grade category or grade items?
+- Should the default be one grade item, with stage-level grades aggregated internally?
+- Should the plugin create a Gradebook category automatically when stage weighting is enabled?
+- What should happen if staff manually edit, move, hide, or delete generated grade items?
+- How should switching between gradebook modes be handled after students have been graded?
 
-### Workflow
+### Workflow and State
 
-- What should happen if a teacher changes stages after students have submitted?
-- Should students be able to edit a submitted stage before the due date, or only through formal attempts?
-- Should stages unlock on submission, on grading, on released feedback, or on student feedback response?
-- Should teachers be able to manually unlock stages for individual students?
+- What is the safest state model for submitted, graded, feedback released, feedback response required, and unlocked?
+- Should students ever be able to edit a submitted stage?
+- How should extensions and overrides work at stage level?
+- Should late logic be per stage, whole activity, or both?
 
-### Assignment feature parity
+### Backup, Restore, and Privacy
 
-- Which core Assignment features are essential before pilot use?
-- Which can be deferred?
-- How should marking workflow, blind marking, marker allocation, overrides, groups, and extensions fit?
+- Which user data must be included in backup and restore?
+- How should submission files, editor files, feedback files, and advanced grading data be restored?
+- What privacy exports and deletions are required for submissions, feedback, feedback responses, and grading data?
 
-### Reporting and notifications
+### Scale and Performance
 
-- What teacher dashboard actions are genuinely useful without becoming clutter?
-- Should nudges use Moodle message providers rather than direct email?
-- What reports would help staff act, not just observe?
+- How will the teacher dashboard perform in large classes?
+- Should stage status summaries be calculated live, cached, or stored?
+- What indexes are needed for common filters?
+- How should groups, cohorts, and separate groups mode affect the dashboard?
 
-### Pedagogy and templates
+### Moodle UX
 
-- Should the plugin include reusable assignment recipes?
-- Should templates be configurable at site/category level?
-- How much guidance text should be built into the activity versus left to learning designers?
+- How close should the submissions page remain to core Assignment?
+- Should the activity use Moodle's secondary navigation tabs exactly like Assignment?
+- How can the settings page stay powerful without overwhelming staff?
+- Should templates hide advanced options until needed?
 
-## Risks
+## Suggested Review Framing
 
-- The activity could become too complex for ordinary staff to configure.
-- Gradebook automation could create confusion if not designed carefully.
-- Attempting full Assignment parity may significantly increase development scope.
-- Stage-level advanced grading may require careful architecture to stay Moodle-native.
-- Backup/restore, privacy, accessibility, and group workflows need proper developer review before any pilot.
+When asking developers and learning designers to review this concept, the most useful questions are:
 
-## Suggested next step
+- Is the underlying problem real and common enough to justify a plugin?
+- Would this reduce staff workload compared with current Moodle workarounds?
+- Would students understand the workflow without extensive training?
+- Does the gradebook model match how academics actually mark staged work?
+- Which parts should be Moodle-native from day one?
+- Which parts should remain future ideas?
+- What is the smallest pilotable version?
 
-Use the current prototype as a conversation artefact, not as the production plan. The next useful step is a structured review with developers, learning designers, and a small number of academic staff:
+## Summary
 
-1. Validate the problem and use cases.
-2. Decide whether the standalone activity architecture is appropriate.
-3. Prioritise MVP requirements.
-4. Identify Moodle APIs and core patterns that should be reused.
-5. Define what would be required for a small sandbox pilot.
+The current prototype demonstrates a possible Moodle-native staged assignment. The next step is not just more coding; it is requirements critique.
 
+The core idea is:
+
+> Staff need one Moodle-native activity for staged submissions, feedback loops, feedback response, stage-aware grading, and Gradebook integration so they can assess learning process as well as final artefacts.
+
+The prototype is useful because it makes the idea tangible. This brief is useful because it gives developers and stakeholders something to challenge before implementation decisions harden.
