@@ -49,7 +49,13 @@ The goal is to support assessment designs where students submit evidence in mult
 
 ## Install in a Moodle sandbox
 
-Copy this folder to:
+Tested in a local sandbox on Moodle **5.1.4+ (Build: 20260604)**. Moodle 5.1 places web-accessible code under the `public` directory, so in that layout copy this folder to:
+
+```text
+public/mod/processassign
+```
+
+For Moodle 4.5-style layouts, copy this folder to:
 
 ```text
 mod/processassign
@@ -121,5 +127,6 @@ These screenshots show the current prototype in a Moodle sandbox with sample sta
 - Repository name suggestion: `moodle-mod_processassign`.
 - Add this plugin folder as the repository root, not the full Moodle installation.
 - Confirm `version.php` targets the intended Moodle branch before wider testing.
+- Moodle 5.1 compatibility smoke tested against the local sandbox, including install/upgrade, settings form, submissions dashboard, grader page, and gradebook page.
 - Ask reviewers to focus first on architecture, Moodle API usage, advanced grading integration, privacy implementation, and whether the standalone activity approach is correct.
 - Do not treat this as production-ready until backup/restore has been fully exercised, automated tests, group workflows, and message providers are implemented.

@@ -106,18 +106,23 @@ class mod_processassign_mod_form extends moodleform_mod {
         $mform->addElement('select', 'stagecount', get_string('numberofstages', 'processassign'), $stagecountoptions);
         $mform->setType('stagecount', PARAM_INT);
         $mform->setDefault('stagecount', 3);
+        $hideforstagecount = function(string $elementname, int $stage) use ($mform): void {
+            for ($count = 1; $count < $stage; $count++) {
+                $mform->hideIf($elementname, 'stagecount', 'eq', (string)$count);
+            }
+        };
 
         for ($i = 1; $i <= 5; $i++) {
             $mform->addElement('header', 'stagehdr' . $i, get_string('stagefieldset', 'processassign', $i));
             $mform->setExpanded('stagehdr' . $i, $i === 1);
             if ($i > 1) {
-                $mform->hideIf('stagehdr' . $i, 'stagecount', 'lt', $i);
+                $hideforstagecount('stagehdr' . $i, $i);
             }
             $mform->addElement('select', 'stage' . $i . 'type', get_string('stagetype', 'processassign'),
                 processassign_stage_type_options());
             $mform->setType('stage' . $i . 'type', PARAM_ALPHANUMEXT);
             if ($i > 1) {
-                $mform->hideIf('stage' . $i . 'type', 'stagecount', 'lt', $i);
+                $hideforstagecount('stage' . $i . 'type', $i);
             }
 
             $mform->addElement('text', 'stage' . $i . 'name', get_string('stagename', 'processassign'), ['size' => '64']);
@@ -126,7 +131,7 @@ class mod_processassign_mod_form extends moodleform_mod {
                 $mform->addRule('stage' . $i . 'name', get_string('required'), 'required', null, 'client');
             }
             if ($i > 1) {
-                $mform->hideIf('stage' . $i . 'name', 'stagecount', 'lt', $i);
+                $hideforstagecount('stage' . $i . 'name', $i);
             }
 
             $mform->addElement('editor', 'stage' . $i . 'instructionseditor',
@@ -134,21 +139,21 @@ class mod_processassign_mod_form extends moodleform_mod {
                 null, $editoroptions);
             $mform->setType('stage' . $i . 'instructionseditor', PARAM_RAW);
             if ($i > 1) {
-                $mform->hideIf('stage' . $i . 'instructionseditor', 'stagecount', 'lt', $i);
+                $hideforstagecount('stage' . $i . 'instructionseditor', $i);
             }
 
             $mform->addElement('text', 'stage' . $i . 'maxgrade', get_string('maxgrade', 'processassign'), ['size' => '8']);
             $mform->setType('stage' . $i . 'maxgrade', PARAM_INT);
             $mform->setDefault('stage' . $i . 'maxgrade', $i === 5 ? 60 : 10);
             if ($i > 1) {
-                $mform->hideIf('stage' . $i . 'maxgrade', 'stagecount', 'lt', $i);
+                $hideforstagecount('stage' . $i . 'maxgrade', $i);
             }
 
             $mform->addElement('date_time_selector', 'stage' . $i . 'duedate', get_string('duedate', 'processassign'),
                 ['optional' => true]);
             $mform->setDefault('stage' . $i . 'duedate', 0);
             if ($i > 1) {
-                $mform->hideIf('stage' . $i . 'duedate', 'stagecount', 'lt', $i);
+                $hideforstagecount('stage' . $i . 'duedate', $i);
             }
 
             $mform->addElement('selectyesno', 'stage' . $i . 'submissiononlinetext',
@@ -172,14 +177,12 @@ class mod_processassign_mod_form extends moodleform_mod {
             $mform->hideIf('stage' . $i . 'maxfiles', 'stage' . $i . 'submissionfile', 'eq', 0);
             $mform->hideIf('stage' . $i . 'maxbytes', 'stage' . $i . 'submissionfile', 'eq', 0);
             $mform->hideIf('stage' . $i . 'acceptedfiletypes', 'stage' . $i . 'submissionfile', 'eq', 0);
-            $mform->hideIf('stage' . $i . 'wordlimitenabled', 'stage' . $i . 'submissiononlinetext', 'eq', 0);
-            $mform->hideIf('stage' . $i . 'wordlimit', 'stage' . $i . 'submissiononlinetext', 'eq', 0);
             if ($i > 1) {
-                $mform->hideIf('stage' . $i . 'submissiononlinetext', 'stagecount', 'lt', $i);
-                $mform->hideIf('stage' . $i . 'submissionfile', 'stagecount', 'lt', $i);
-                $mform->hideIf('stage' . $i . 'maxfiles', 'stagecount', 'lt', $i);
-                $mform->hideIf('stage' . $i . 'maxbytes', 'stagecount', 'lt', $i);
-                $mform->hideIf('stage' . $i . 'acceptedfiletypes', 'stagecount', 'lt', $i);
+                $hideforstagecount('stage' . $i . 'submissiononlinetext', $i);
+                $hideforstagecount('stage' . $i . 'submissionfile', $i);
+                $hideforstagecount('stage' . $i . 'maxfiles', $i);
+                $hideforstagecount('stage' . $i . 'maxbytes', $i);
+                $hideforstagecount('stage' . $i . 'acceptedfiletypes', $i);
             }
 
             $mform->addElement('advcheckbox', 'stage' . $i . 'wordlimitenabled',
@@ -187,15 +190,17 @@ class mod_processassign_mod_form extends moodleform_mod {
             $mform->addElement('text', 'stage' . $i . 'wordlimit',
                 get_string('wordlimit', 'assignsubmission_onlinetext'), ['size' => '8']);
             $mform->setType('stage' . $i . 'wordlimit', PARAM_INT);
+            $mform->hideIf('stage' . $i . 'wordlimitenabled', 'stage' . $i . 'submissiononlinetext', 'eq', 0);
+            $mform->hideIf('stage' . $i . 'wordlimit', 'stage' . $i . 'submissiononlinetext', 'eq', 0);
             $mform->disabledIf('stage' . $i . 'wordlimit', 'stage' . $i . 'wordlimitenabled', 'notchecked');
 
             $mform->addElement('advcheckbox', 'stage' . $i . 'requirefeedbackresponse',
                 get_string('requirefeedbackresponse', 'processassign'));
             $mform->addHelpButton('stage' . $i . 'requirefeedbackresponse', 'requirefeedbackresponse', 'processassign');
             if ($i > 1) {
-                $mform->hideIf('stage' . $i . 'wordlimitenabled', 'stagecount', 'lt', $i);
-                $mform->hideIf('stage' . $i . 'wordlimit', 'stagecount', 'lt', $i);
-                $mform->hideIf('stage' . $i . 'requirefeedbackresponse', 'stagecount', 'lt', $i);
+                $hideforstagecount('stage' . $i . 'wordlimitenabled', $i);
+                $hideforstagecount('stage' . $i . 'wordlimit', $i);
+                $hideforstagecount('stage' . $i . 'requirefeedbackresponse', $i);
             }
         }
 
