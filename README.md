@@ -4,6 +4,8 @@
 
 The goal is to support assessment designs where students submit evidence in multiple stages, receive feedback and a stage grade, then unlock the next stage. This keeps the learning process inside Moodle instead of moving students and staff to an external platform.
 
+For the broader rationale, use cases, MVP requirements, risks, and review questions, see the [Process Assignment product brief](docs/process-assignment-product-brief.md).
+
 ## Current capabilities
 
 - Course activity type: **Process assignment**.
