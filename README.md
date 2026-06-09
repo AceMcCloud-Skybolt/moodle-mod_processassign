@@ -4,12 +4,6 @@
 
 The goal is to support assessment designs where students submit evidence in multiple stages, receive feedback and a stage grade, then unlock the next stage. This keeps the learning process inside Moodle instead of moving students and staff to an external platform.
 
-## Concept and requirements brief
-
-For a non-code handoff explaining why this activity is needed, what problems it solves, target users, core use cases, MVP requirements, future ideas, and developer review questions, see:
-
-[`docs/process-assignment-product-brief.md`](docs/process-assignment-product-brief.md)
-
 ## Current capabilities
 
 - Course activity type: **Process assignment**.
