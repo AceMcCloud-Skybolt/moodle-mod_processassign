@@ -1166,9 +1166,6 @@ if ($action === 'grader') {
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(format_string($processassign->name));
-if ($canGrade) {
-    processassign_update_grades($processassign);
-}
 if (!empty($processassign->alwaysshowdescription)
         || empty($processassign->allowsubmissionsfromdate)
         || time() >= $processassign->allowsubmissionsfromdate

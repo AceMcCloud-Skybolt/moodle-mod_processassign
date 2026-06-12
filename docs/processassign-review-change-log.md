@@ -45,3 +45,11 @@
 - Process assignment `Submissions` now has native-style top `Actions`, row `Submission actions`, and row `Grade actions` menus.
 - Top `Actions` links to the Moodle gradebook; row submission menus expose `View submission`, planned `Edit submission`, planned `Prevent submission changes`, planned `Grant extension`, and `Nudge`; row grade menus expose `Grade`.
 - Process assignment grader now includes `View all submissions`, previous/next navigation, change-user selector, student/stage header, due-date context, status summary, current gradebook grade, TinyMCE feedback, Notify student, Save changes, Save and show next, and Reset.
+
+## 2026-06-12 security/integration review hardening
+
+- Fixed file-only submission validation by initialising the current stage before checking submitted file counts.
+- Hardened `processassign_pluginfile()` to reject files whose submission or stage does not belong to the current activity, and to respect future feedback-release controls for student access to feedback files.
+- Removed gradebook update side effects from ordinary activity page rendering; gradebook updates now remain on write/update paths and restore.
+- Rebuilt gradebook structures during restore so category/stage grade items are not deferred to a later page view.
+- Bumped plugin version and added a current upgrade savepoint; refreshed `install.xml` metadata.

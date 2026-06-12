@@ -57,8 +57,15 @@ class restore_processassign_activity_structure_step extends restore_activity_str
     }
 
     protected function after_execute() {
+        global $CFG, $DB;
+
         $this->add_related_files('mod_processassign', 'intro', null);
         $this->add_related_files('mod_processassign', 'submission', 'processassign_submission');
         $this->add_related_files('mod_processassign', 'feedback', 'processassign_submission');
+
+        require_once($CFG->dirroot . '/mod/processassign/lib.php');
+        if ($processassign = $DB->get_record('processassign', ['id' => $this->task->get_activityid()])) {
+            processassign_update_grades($processassign);
+        }
     }
 }

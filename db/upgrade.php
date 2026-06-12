@@ -178,5 +178,9 @@ function xmldb_processassign_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026052900, 'processassign');
     }
 
+    if ($oldversion < 2026061200) {
+        upgrade_mod_savepoint(true, 2026061200, 'processassign');
+    }
+
     return true;
 }

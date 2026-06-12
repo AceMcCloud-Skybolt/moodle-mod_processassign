@@ -51,6 +51,7 @@ class submission_form extends \moodleform {
         $errors = parent::validation($data, $files);
 
         $processassign = $this->_customdata['processassign'];
+        $stage = $this->_customdata['stage'];
         $text = trim($data['submissioneditor']['text'] ?? '');
         $filecount = 0;
         if (!empty($stage->submissionfile)) {
@@ -66,7 +67,6 @@ class submission_form extends \moodleform {
             }
         }
 
-        $stage = $this->_customdata['stage'];
         if (!empty($stage->wordlimitenabled) && !empty($stage->wordlimit) && $text !== '') {
             $count = count_words($text, FORMAT_HTML);
             if ($count > (int)$stage->wordlimit) {

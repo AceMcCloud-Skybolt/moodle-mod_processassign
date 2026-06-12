@@ -532,8 +532,21 @@ function processassign_pluginfile($course, $cm, $context, $filearea, $args, $for
     if (!$submission = $DB->get_record('processassign_subs', ['id' => $itemid])) {
         return false;
     }
+    if ((int)$submission->processassignid !== (int)$cm->instance) {
+        return false;
+    }
+    if (!$stage = $DB->get_record('processassign_stages', [
+            'id' => $submission->stageid,
+            'processassignid' => $cm->instance,
+        ])) {
+        return false;
+    }
 
-    if ($submission->userid != $USER->id && !has_capability('mod/processassign:grade', $context)) {
+    $cangrade = has_capability('mod/processassign:grade', $context);
+    if ($submission->userid != $USER->id && !$cangrade) {
+        return false;
+    }
+    if ($filearea === 'feedback' && !$cangrade && empty($stage->releasefeedback)) {
         return false;
     }
 
