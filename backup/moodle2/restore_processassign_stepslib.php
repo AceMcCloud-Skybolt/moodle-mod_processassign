@@ -25,6 +25,10 @@ class restore_processassign_activity_structure_step extends restore_activity_str
         $data->duedate = $this->apply_date_offset($data->duedate ?? 0);
         $data->cutoffdate = $this->apply_date_offset($data->cutoffdate ?? 0);
         $data->gradingduedate = $this->apply_date_offset($data->gradingduedate ?? 0);
+        $data->timelimit = $data->timelimit ?? 0;
+        $data->activity = $data->activity ?? '';
+        $data->activityformat = $data->activityformat ?? FORMAT_HTML;
+        $data->requirefeedbackresponse = $data->requirefeedbackresponse ?? 0;
 
         $newitemid = $DB->insert_record('processassign', $data);
         $this->apply_activity_instance($newitemid);
@@ -60,6 +64,8 @@ class restore_processassign_activity_structure_step extends restore_activity_str
         global $CFG, $DB;
 
         $this->add_related_files('mod_processassign', 'intro', null);
+        $this->add_related_files('mod_processassign', 'introattachment', null);
+        $this->add_related_files('mod_processassign', 'activity', null);
         $this->add_related_files('mod_processassign', 'submission', 'processassign_submission');
         $this->add_related_files('mod_processassign', 'feedback', 'processassign_submission');
 

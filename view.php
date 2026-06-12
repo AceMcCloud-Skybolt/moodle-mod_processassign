@@ -126,6 +126,42 @@ function processassign_render_feedback_files($submission, $context) {
     return html_writer::div(html_writer::alist($items), 'mt-2 alert alert-secondary');
 }
 
+function processassign_render_activity_instructions($processassign, $context): string {
+    if (trim($processassign->activity ?? '') === '') {
+        return '';
+    }
+
+    $activity = file_rewrite_pluginfile_urls($processassign->activity, 'pluginfile.php', $context->id,
+        'mod_processassign', 'activity', 0);
+
+    return html_writer::div(
+        html_writer::tag('h3', get_string('activityeditor', 'assign'), ['class' => 'h5']) .
+        format_text($activity, $processassign->activityformat ?? FORMAT_HTML, ['context' => $context]),
+        'processassign-activity-instructions alert alert-light border'
+    );
+}
+
+function processassign_render_intro_attachments($context): string {
+    $fs = get_file_storage();
+    $files = $fs->get_area_files($context->id, 'mod_processassign', 'introattachment', 0, 'filename', false);
+    if (!$files) {
+        return '';
+    }
+
+    $items = [];
+    foreach ($files as $file) {
+        $url = moodle_url::make_pluginfile_url($context->id, 'mod_processassign', 'introattachment', 0,
+            $file->get_filepath(), $file->get_filename());
+        $items[] = html_writer::link($url, s($file->get_filename()));
+    }
+
+    return html_writer::div(
+        html_writer::tag('h3', get_string('introattachments', 'assign'), ['class' => 'h5']) .
+        html_writer::alist($items),
+        'processassign-intro-attachments alert alert-light border'
+    );
+}
+
 function processassign_stage_requirements_html($stage): string {
     $items = [];
     if (!empty($stage->submissiononlinetext)) {
@@ -774,7 +810,7 @@ function processassign_render_teacher_table($processassign, $cm, $context, $stag
         get_string('submissionfiles', 'processassign'),
         get_string('submissiontext', 'processassign'),
         get_string('feedback', 'processassign'),
-        get_string('feedbackfiles', 'assignfeedback_file'),
+        get_string('feedbackfiles', 'processassign'),
         get_string('feedbackresponse', 'processassign'),
         get_string('submissionactions', 'processassign'),
         get_string('gradeactions', 'processassign'),
@@ -1171,6 +1207,8 @@ if (!empty($processassign->alwaysshowdescription)
         || time() >= $processassign->allowsubmissionsfromdate
         || $canGrade) {
     echo format_module_intro('processassign', $processassign, $cm->id);
+    echo processassign_render_activity_instructions($processassign, $context);
+    echo processassign_render_intro_attachments($context);
 }
 
 $stages = processassign_get_stages($processassign->id);

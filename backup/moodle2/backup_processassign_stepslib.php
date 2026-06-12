@@ -9,12 +9,13 @@ class backup_processassign_activity_structure_step extends backup_activity_struc
         $userinfo = $this->get_setting_value('userinfo');
 
         $processassign = new backup_nested_element('processassign', ['id'], [
-            'course', 'name', 'intro', 'introformat', 'grade', 'allowsubmissionsfromdate', 'duedate', 'cutoffdate',
-            'gradingduedate',
+            'course', 'name', 'intro', 'introformat', 'activity', 'activityformat', 'grade',
+            'allowsubmissionsfromdate', 'duedate', 'cutoffdate', 'gradingduedate', 'timelimit',
             'alwaysshowdescription', 'submissiononlinetext', 'submissionfile', 'maxfiles', 'maxbytes',
             'feedbackcomments', 'feedbackfiles', 'feedbackmaxfiles', 'feedbackmaxbytes',
             'wordlimitenabled', 'wordlimit', 'sendnotifications', 'sendstudentnotifications', 'submissiondrafts',
-            'requiresubmissionstatement', 'maxattempts', 'attemptreopenmethod', 'gradebookmode', 'timemodified',
+            'requiresubmissionstatement', 'requirefeedbackresponse', 'maxattempts', 'attemptreopenmethod',
+            'gradebookmode', 'timemodified',
         ]);
 
         $stages = new backup_nested_element('stages');
@@ -50,6 +51,8 @@ class backup_processassign_activity_structure_step extends backup_activity_struc
         }
 
         $processassign->annotate_files('mod_processassign', 'intro', null);
+        $processassign->annotate_files('mod_processassign', 'introattachment', null);
+        $processassign->annotate_files('mod_processassign', 'activity', null);
 
         return $this->prepare_activity_structure($processassign);
     }

@@ -15,6 +15,30 @@
     max-width: 72rem;
 }
 
+.path-mod-processassign .processassign-feedback-gate {
+    max-width: 56rem;
+}
+
+.path-mod-processassign #fgroup_id_advancedgradingmethodsgroup .felement {
+    align-items: center;
+    display: grid;
+    gap: .5rem .75rem;
+    grid-template-columns: minmax(14rem, 22rem) auto;
+}
+
+.path-mod-processassign #fgroup_id_advancedgradingmethodsgroup br {
+    display: none;
+}
+
+.path-mod-processassign #fgroup_id_advancedgradingmethodsgroup select {
+    max-width: 22rem;
+}
+
+.path-mod-processassign .processassign-activity-instructions,
+.path-mod-processassign .processassign-intro-attachments {
+    max-width: 72rem;
+}
+
 .path-mod-processassign .processassign-submissions-table td,
 .path-mod-processassign .processassign-submissions-table th {
     vertical-align: top;

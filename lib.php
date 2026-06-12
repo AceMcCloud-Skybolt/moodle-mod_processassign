@@ -108,6 +108,7 @@ function processassign_add_instance($data, $mform = null) {
         $data->grade = 100;
     }
     $data->id = $DB->insert_record('processassign', $data);
+    processassign_save_intro_files($data);
     processassign_save_stages($data->id, $data);
     processassign_grade_item_update($data);
 
@@ -125,6 +126,7 @@ function processassign_update_instance($data, $mform = null) {
         $data->gradecategoryid = $oldrecord->gradecategoryid;
     }
     $DB->update_record('processassign', $data);
+    processassign_save_intro_files($data);
     processassign_save_stages($data->id, $data);
     processassign_grade_item_update($data);
     processassign_update_grades($data);
@@ -137,7 +139,11 @@ function processassign_normalise_settings($data) {
     $data->duedate = (int)($data->duedate ?? 0);
     $data->cutoffdate = (int)($data->cutoffdate ?? 0);
     $data->gradingduedate = (int)($data->gradingduedate ?? 0);
+    $data->timelimit = max(0, (int)($data->timelimit ?? 0));
     $data->alwaysshowdescription = !empty($data->alwaysshowdescription) ? 1 : 0;
+    $activity = $data->activityeditor ?? null;
+    $data->activity = is_array($activity) ? ($activity['text'] ?? '') : ($data->activity ?? '');
+    $data->activityformat = is_array($activity) ? ($activity['format'] ?? FORMAT_HTML) : ($data->activityformat ?? FORMAT_HTML);
     $data->submissiononlinetext = !empty($data->submissiononlinetext) ? 1 : 0;
     $data->submissionfile = !empty($data->submissionfile) ? 1 : 0;
     $data->maxfiles = max(1, (int)($data->maxfiles ?? 5));
@@ -152,6 +158,7 @@ function processassign_normalise_settings($data) {
     $data->sendstudentnotifications = !empty($data->sendstudentnotifications) ? 1 : 0;
     $data->submissiondrafts = !empty($data->submissiondrafts) ? 1 : 0;
     $data->requiresubmissionstatement = !empty($data->requiresubmissionstatement) ? 1 : 0;
+    $data->requirefeedbackresponse = !empty($data->requirefeedbackresponse) ? 1 : 0;
     $data->maxattempts = (int)($data->maxattempts ?? 1);
     $data->attemptreopenmethod = in_array($data->attemptreopenmethod ?? 'manual',
         ['none', 'manual', 'untilpass', 'automatic'], true) ? $data->attemptreopenmethod : 'manual';
@@ -159,6 +166,27 @@ function processassign_normalise_settings($data) {
         ? $data->gradebookmode
         : 'single';
     $data->gradecategoryid = (int)($data->gradecategoryid ?? 0);
+}
+
+function processassign_save_intro_files($data): void {
+    global $DB;
+
+    if (empty($data->coursemodule)) {
+        return;
+    }
+
+    $context = context_module::instance($data->coursemodule);
+    if (isset($data->introattachments)) {
+        file_save_draft_area_files($data->introattachments, $context->id, 'mod_processassign',
+            'introattachment', 0, ['subdirs' => 0]);
+    }
+
+    if (!empty($data->activityeditor) && is_array($data->activityeditor)) {
+        $data->activity = file_save_draft_area_files($data->activityeditor['itemid'], $context->id,
+            'mod_processassign', 'activity', 0, ['subdirs' => true], $data->activity ?? '');
+        $DB->set_field('processassign', 'activity', $data->activity, ['id' => $data->id]);
+        $DB->set_field('processassign', 'activityformat', $data->activityformat, ['id' => $data->id]);
+    }
 }
 
 function processassign_delete_instance($id) {
@@ -212,7 +240,8 @@ function processassign_save_stages($processassignid, $data) {
         $acceptedfiletypes = clean_param($data->{'stage' . $i . 'acceptedfiletypes'} ?? '*', PARAM_RAW_TRIMMED);
         $wordlimitenabled = !empty($data->{'stage' . $i . 'wordlimitenabled'}) ? 1 : 0;
         $wordlimit = max(0, (int)($data->{'stage' . $i . 'wordlimit'} ?? 0));
-        $requirefeedbackresponse = !empty($data->{'stage' . $i . 'requirefeedbackresponse'}) ? 1 : 0;
+        $requirefeedbackresponse = !empty($data->requirefeedbackresponse)
+            || !empty($data->{'stage' . $i . 'requirefeedbackresponse'}) ? 1 : 0;
         $releasegrade = 1;
         $releasefeedback = 1;
 
@@ -523,11 +552,24 @@ function processassign_get_user_grade($processassign, $userid) {
 function processassign_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = []) {
     global $DB, $USER;
 
-    if ($context->contextlevel != CONTEXT_MODULE || !in_array($filearea, ['submission', 'feedback'], true)) {
+    if ($context->contextlevel != CONTEXT_MODULE
+            || !in_array($filearea, ['introattachment', 'activity', 'submission', 'feedback'], true)) {
         return false;
     }
 
     require_course_login($course, true, $cm);
+    if (in_array($filearea, ['introattachment', 'activity'], true)) {
+        $filename = array_pop($args);
+        $filepath = $args ? '/' . implode('/', $args) . '/' : '/';
+        $fs = get_file_storage();
+        $file = $fs->get_file($context->id, 'mod_processassign', $filearea, 0, $filepath, $filename);
+        if (!$file || $file->is_directory()) {
+            return false;
+        }
+
+        send_stored_file($file, 0, 0, $forcedownload, $options);
+    }
+
     $itemid = (int)array_shift($args);
     if (!$submission = $DB->get_record('processassign_subs', ['id' => $itemid])) {
         return false;

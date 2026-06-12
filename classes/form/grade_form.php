@@ -37,7 +37,7 @@ class grade_form extends \moodleform {
             $mform->setType('feedback', PARAM_RAW);
         }
         if (!empty($processassign->feedbackfiles)) {
-            $mform->addElement('filemanager', 'feedbackfiles', get_string('feedbackfiles', 'assignfeedback_file'),
+            $mform->addElement('filemanager', 'feedbackfiles', get_string('feedbackfiles', 'processassign'),
                 null, $options['feedbackfilemanager']);
         }
 

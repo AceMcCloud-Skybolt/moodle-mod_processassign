@@ -35,6 +35,20 @@ class mod_processassign_mod_form extends moodleform_mod {
             'maxbytes' => $COURSE->maxbytes,
         ]);
 
+        $mform->addElement('editor', 'activityeditor', get_string('activityeditor', 'assign'),
+            ['rows' => 10], [
+                'maxfiles' => EDITOR_UNLIMITED_FILES,
+                'maxbytes' => $COURSE->maxbytes,
+                'context' => $this->context,
+                'subdirs' => true,
+            ]);
+        $mform->addHelpButton('activityeditor', 'activityeditor', 'assign');
+        $mform->setType('activityeditor', PARAM_RAW);
+
+        $mform->addElement('filemanager', 'introattachments', get_string('introattachments', 'assign'),
+            null, ['subdirs' => 0, 'maxbytes' => $COURSE->maxbytes]);
+        $mform->addHelpButton('introattachments', 'introattachments', 'assign');
+
         $mform->addElement('header', 'availability', get_string('availability', 'assign'));
         $mform->setExpanded('availability', true);
         $mform->addElement('date_time_selector', 'allowsubmissionsfromdate',
@@ -47,6 +61,9 @@ class mod_processassign_mod_form extends moodleform_mod {
         $mform->addElement('date_time_selector', 'gradingduedate', get_string('gradingduedate', 'assign'),
             ['optional' => true]);
         $mform->addHelpButton('gradingduedate', 'gradingduedate', 'assign');
+        $mform->addElement('duration', 'timelimit', get_string('timelimit', 'assign'), ['optional' => true]);
+        $mform->addHelpButton('timelimit', 'timelimit', 'assign');
+        $mform->addElement('static', 'timelimitnotice', '', get_string('timelimitnotice', 'processassign'));
         $mform->addElement('checkbox', 'alwaysshowdescription', get_string('alwaysshowdescription', 'assign'));
         $mform->addHelpButton('alwaysshowdescription', 'alwaysshowdescription', 'assign');
         $mform->setDefault('alwaysshowdescription', 1);
@@ -79,9 +96,9 @@ class mod_processassign_mod_form extends moodleform_mod {
         $mform->setDefault('sendstudentnotifications', 1);
 
         $mform->addElement('header', 'feedbacktypes', get_string('feedbacktypes', 'assign'));
-        $mform->addElement('selectyesno', 'feedbackcomments', get_string('feedbackcomments', 'assignfeedback_comments'));
+        $mform->addElement('selectyesno', 'feedbackcomments', get_string('feedbackcomments', 'processassign'));
         $mform->setDefault('feedbackcomments', 1);
-        $mform->addElement('selectyesno', 'feedbackfiles', get_string('feedbackfiles', 'assignfeedback_file'));
+        $mform->addElement('selectyesno', 'feedbackfiles', get_string('feedbackfiles', 'processassign'));
         $mform->setDefault('feedbackfiles', 0);
         $maxfeedbackfiles = [];
         for ($i = 1; $i <= 20; $i++) {
@@ -98,6 +115,7 @@ class mod_processassign_mod_form extends moodleform_mod {
 
         $mform->addElement('header', 'stageshdr', get_string('stages', 'processassign'));
         $mform->addHelpButton('stageshdr', 'stagecount', 'processassign');
+        $mform->addElement('static', 'stagesubmissiontypesnote', '', get_string('stagesubmissiontypesnote', 'processassign'));
 
         $stagecountoptions = [];
         for ($i = 1; $i <= 5; $i++) {
@@ -106,6 +124,15 @@ class mod_processassign_mod_form extends moodleform_mod {
         $mform->addElement('select', 'stagecount', get_string('numberofstages', 'processassign'), $stagecountoptions);
         $mform->setType('stagecount', PARAM_INT);
         $mform->setDefault('stagecount', 3);
+        $mform->addElement('html', html_writer::div(
+            html_writer::tag('strong', get_string('feedbackresponsegate', 'processassign')) . html_writer::empty_tag('br') .
+            get_string('feedbackresponsegate_desc', 'processassign'),
+            'alert alert-info processassign-feedback-gate'
+        ));
+        $mform->addElement('advcheckbox', 'requirefeedbackresponse',
+            get_string('requirefeedbackresponseassignment', 'processassign'));
+        $mform->addHelpButton('requirefeedbackresponse', 'requirefeedbackresponseassignment', 'processassign');
+        $mform->setDefault('requirefeedbackresponse', 0);
         $hideforstagecount = function(string $elementname, int $stage) use ($mform): void {
             for ($count = 1; $count < $stage; $count++) {
                 $mform->hideIf($elementname, 'stagecount', 'eq', (string)$count);
@@ -155,6 +182,13 @@ class mod_processassign_mod_form extends moodleform_mod {
             if ($i > 1) {
                 $hideforstagecount('stage' . $i . 'duedate', $i);
             }
+            $mform->addElement('duration', 'stage' . $i . 'timelimit', get_string('timelimit', 'assign'),
+                ['optional' => true]);
+            $mform->addElement('static', 'stage' . $i . 'timelimitnotice', '', get_string('timelimitnotice', 'processassign'));
+            if ($i > 1) {
+                $hideforstagecount('stage' . $i . 'timelimit', $i);
+                $hideforstagecount('stage' . $i . 'timelimitnotice', $i);
+            }
 
             $mform->addElement('selectyesno', 'stage' . $i . 'submissiononlinetext',
                 get_string('onlinetext', 'assignsubmission_onlinetext'));
@@ -197,6 +231,7 @@ class mod_processassign_mod_form extends moodleform_mod {
             $mform->addElement('advcheckbox', 'stage' . $i . 'requirefeedbackresponse',
                 get_string('requirefeedbackresponse', 'processassign'));
             $mform->addHelpButton('stage' . $i . 'requirefeedbackresponse', 'requirefeedbackresponse', 'processassign');
+            $mform->hideIf('stage' . $i . 'requirefeedbackresponse', 'requirefeedbackresponse', 'checked');
             if ($i > 1) {
                 $hideforstagecount('stage' . $i . 'wordlimitenabled', $i);
                 $hideforstagecount('stage' . $i . 'wordlimit', $i);
@@ -230,6 +265,9 @@ class mod_processassign_mod_form extends moodleform_mod {
         if (!empty($data['gradingduedate']) && !empty($data['duedate']) && $data['gradingduedate'] < $data['duedate']) {
             $errors['gradingduedate'] = get_string('gradingdueduedatevalidation', 'assign');
         }
+        if (!empty($data['timelimit']) && $data['timelimit'] < 0) {
+            $errors['timelimit'] = get_string('invaliddata', 'error');
+        }
         for ($i = 1; $i <= 5; $i++) {
             if ($i > (int)$data['stagecount']) {
                 continue;
@@ -240,6 +278,9 @@ class mod_processassign_mod_form extends moodleform_mod {
             if (!empty($data['stage' . $i . 'wordlimitenabled']) && empty($data['stage' . $i . 'wordlimit'])) {
                 $errors['stage' . $i . 'wordlimit'] = get_string('required');
             }
+            if (!empty($data['stage' . $i . 'timelimit']) && $data['stage' . $i . 'timelimit'] < 0) {
+                $errors['stage' . $i . 'timelimit'] = get_string('invaliddata', 'error');
+            }
         }
 
         return $errors;
@@ -249,6 +290,10 @@ class mod_processassign_mod_form extends moodleform_mod {
         global $DB;
 
         if (empty($defaultvalues['id'])) {
+            $defaultvalues['activityeditor'] = [
+                'text' => '',
+                'format' => FORMAT_HTML,
+            ];
             $defaultvalues['stage1name'] = get_string('stage', 'processassign') . ' 1';
             $defaultvalues['stage2name'] = get_string('stage', 'processassign') . ' 2';
             $defaultvalues['stage3name'] = get_string('stage', 'processassign') . ' 3';
@@ -265,6 +310,19 @@ class mod_processassign_mod_form extends moodleform_mod {
             }
             return;
         }
+
+        $draftitemid = file_get_submitted_draft_itemid('introattachments');
+        file_prepare_draft_area($draftitemid, $this->context->id, 'mod_processassign', 'introattachment',
+            0, ['subdirs' => 0]);
+        $defaultvalues['introattachments'] = $draftitemid;
+
+        $activitydraftitemid = file_get_submitted_draft_itemid('activityeditor');
+        $defaultvalues['activityeditor'] = [
+            'text' => file_prepare_draft_area($activitydraftitemid, $this->context->id, 'mod_processassign',
+                'activity', 0, ['subdirs' => true], $defaultvalues['activity'] ?? ''),
+            'format' => $defaultvalues['activityformat'] ?? FORMAT_HTML,
+            'itemid' => $activitydraftitemid,
+        ];
 
         $stages = $DB->get_records('processassign_stages', ['processassignid' => $defaultvalues['id']], 'sortorder ASC');
         $defaultvalues['stagecount'] = max(1, min(5, count($stages)));

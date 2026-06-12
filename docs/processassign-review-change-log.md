@@ -53,3 +53,12 @@
 - Removed gradebook update side effects from ordinary activity page rendering; gradebook updates now remain on write/update paths and restore.
 - Rebuilt gradebook structures during restore so category/stage grade items are not deferred to a later page view.
 - Bumped plugin version and added a current upgrade savepoint; refreshed `install.xml` metadata.
+
+## 2026-06-12 university dev-site settings review
+
+- Added Moodle Assignment-style Activity instructions and Additional files fields to the General settings section.
+- Added stored overall and per-stage time-limit fields with explicit prototype notices that countdown enforcement is not implemented yet.
+- Kept submission type controls at stage level, with explanatory text, because different stages can require different evidence types.
+- Added a prominent assignment-level feedback response gate so staff can require feedback responses across all stages without hunting for per-stage checkboxes.
+- Replaced feedback type labels with local plugin language strings to avoid `[[feedbackcomments]]` / `[[feedbackfiles]]` display issues on sites where Assignment feedback subplugin strings are unavailable.
+- Added light CSS to make the multi-stage advanced grading method selector stack more cleanly.

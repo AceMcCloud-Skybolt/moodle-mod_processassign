@@ -182,5 +182,23 @@ function xmldb_processassign_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026061200, 'processassign');
     }
 
+    if ($oldversion < 2026061201) {
+        $table = new xmldb_table('processassign');
+        $fields = [
+            new xmldb_field('activity', XMLDB_TYPE_TEXT, null, null, null, null, null, 'introformat'),
+            new xmldb_field('activityformat', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '1', 'activity'),
+            new xmldb_field('timelimit', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'gradingduedate'),
+            new xmldb_field('requirefeedbackresponse', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0',
+                'requiresubmissionstatement'),
+        ];
+        foreach ($fields as $field) {
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+
+        upgrade_mod_savepoint(true, 2026061201, 'processassign');
+    }
+
     return true;
 }
