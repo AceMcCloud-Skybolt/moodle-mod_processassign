@@ -4,7 +4,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_processassign';
-$plugin->version = 2026061202;
+$plugin->version = 2026061203;
 $plugin->requires = 2024100700;
 $plugin->maturity = MATURITY_ALPHA;
-$plugin->release = '0.1.5';
+$plugin->release = '0.1.6';

@@ -894,7 +894,6 @@ function processassign_render_teacher_table($processassign, $cm, $context, $stag
     echo html_writer::select($statusoptions, 'statusfilter', $statusfilter, false, [
         'id' => 'id_statusfilter',
         'class' => 'custom-select',
-        'onchange' => 'this.form.submit()',
     ]);
 
     $stageoptions = [0 => get_string('allstages', 'processassign')];
@@ -905,7 +904,6 @@ function processassign_render_teacher_table($processassign, $cm, $context, $stag
     echo html_writer::select($stageoptions, 'stagefilter', $stagefilter, false, [
         'id' => 'id_stagefilter',
         'class' => 'custom-select',
-        'onchange' => 'this.form.submit()',
     ]);
 
     echo html_writer::empty_tag('input', [

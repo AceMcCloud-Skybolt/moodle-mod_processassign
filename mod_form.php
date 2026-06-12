@@ -243,6 +243,8 @@ class mod_processassign_mod_form extends moodleform_mod {
         $mform->addElement('select', 'gradebookmode', get_string('gradebookmode', 'processassign'),
             processassign_gradebook_mode_options());
         $mform->addHelpButton('gradebookmode', 'gradebookmode', 'processassign');
+        $mform->addElement('static', 'gradebookmodewarning', '',
+            html_writer::div(get_string('gradebookmodewarning', 'processassign'), 'alert alert-warning mb-0'));
         $mform->setDefault('gradebookmode', 'single');
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();
@@ -267,6 +269,13 @@ class mod_processassign_mod_form extends moodleform_mod {
         }
         if (!empty($data['timelimit']) && $data['timelimit'] < 0) {
             $errors['timelimit'] = get_string('invaliddata', 'error');
+        }
+        if (!empty($data['grade'])) {
+            $gradetype = is_array($data['grade']) ? ($data['grade']['modgrade_type'] ?? '') : '';
+            $gradevalue = is_array($data['grade']) ? ($data['grade']['modgrade_point'] ?? 0) : $data['grade'];
+            if ($gradetype === 'scale' || (!is_array($data['grade']) && (float)$gradevalue < 0)) {
+                $errors['grade'] = get_string('scalegradingnotsupported', 'processassign');
+            }
         }
         for ($i = 1; $i <= 5; $i++) {
             if ($i > (int)$data['stagecount']) {

@@ -119,11 +119,14 @@ function processassign_update_instance($data, $mform = null) {
     global $DB;
 
     $data->id = $data->instance;
-    $oldrecord = $DB->get_record('processassign', ['id' => $data->id], 'id, gradecategoryid');
+    $oldrecord = $DB->get_record('processassign', ['id' => $data->id], 'id, gradebookmode, gradecategoryid');
     $data->timemodified = time();
     processassign_normalise_settings($data);
     if ($oldrecord && !empty($oldrecord->gradecategoryid)) {
         $data->gradecategoryid = $oldrecord->gradecategoryid;
+    }
+    if ($oldrecord) {
+        $data->previousgradebookmode = $oldrecord->gradebookmode;
     }
     $DB->update_record('processassign', $data);
     processassign_save_intro_files($data);
@@ -303,14 +306,21 @@ function processassign_get_coursemodule_info($coursemodule) {
 function processassign_grade_item_update($processassign, $grades = null) {
     processassign_require_gradebook();
 
-    if (($processassign->gradebookmode ?? 'single') === 'category') {
-        processassign_grade_item_delete($processassign, 0);
+    $mode = $processassign->gradebookmode ?? 'single';
+    $previousmode = $processassign->previousgradebookmode ?? $mode;
+
+    if ($mode === 'category') {
+        if ($previousmode !== 'category') {
+            processassign_grade_item_delete($processassign, 0);
+        }
         processassign_update_stage_grade_items($processassign);
         return GRADE_UPDATE_OK;
     }
 
-    processassign_delete_stage_grade_items($processassign);
-    if (!empty($processassign->gradecategoryid)) {
+    if ($previousmode !== 'single') {
+        processassign_delete_stage_grade_items($processassign);
+    }
+    if ($previousmode !== 'single' && !empty($processassign->gradecategoryid)) {
         processassign_delete_grade_category($processassign);
     }
 
@@ -511,7 +521,7 @@ function processassign_update_grades($processassign, $userid = 0, $nullifnone = 
     }
 
     if ($userid) {
-        $grade = processassign_get_user_grade($processassign, $userid);
+        $grade = processassign_get_user_grade($processassign, $userid, $nullifnone);
         processassign_grade_item_update($processassign, $grade);
         return;
     }
@@ -520,13 +530,13 @@ function processassign_update_grades($processassign, $userid = 0, $nullifnone = 
         'processassignid = :processassignid', ['processassignid' => $processassign->id]);
     $grades = [];
     foreach ($userids as $gradeuserid) {
-        $grade = processassign_get_user_grade($processassign, $gradeuserid);
+        $grade = processassign_get_user_grade($processassign, $gradeuserid, $nullifnone);
         $grades[$gradeuserid] = $grade;
     }
     processassign_grade_item_update($processassign, $grades);
 }
 
-function processassign_get_user_grade($processassign, $userid) {
+function processassign_get_user_grade($processassign, $userid, bool $nullifnone = true) {
     global $DB;
 
     $stages = $DB->get_records('processassign_stages', ['processassignid' => $processassign->id]);
@@ -544,7 +554,8 @@ function processassign_get_user_grade($processassign, $userid) {
 
     $grade = new stdClass();
     $grade->userid = $userid;
-    $grade->rawgrade = $totalmax > 0 ? ($earned / $totalmax) * $processassign->grade : 0;
+    $grade->rawgrade = (!$submissions && $nullifnone) ? null :
+        ($totalmax > 0 ? ($earned / $totalmax) * $processassign->grade : 0);
     return $grade;
 }
 
