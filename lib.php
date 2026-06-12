@@ -240,8 +240,7 @@ function processassign_save_stages($processassignid, $data) {
         $acceptedfiletypes = clean_param($data->{'stage' . $i . 'acceptedfiletypes'} ?? '*', PARAM_RAW_TRIMMED);
         $wordlimitenabled = !empty($data->{'stage' . $i . 'wordlimitenabled'}) ? 1 : 0;
         $wordlimit = max(0, (int)($data->{'stage' . $i . 'wordlimit'} ?? 0));
-        $requirefeedbackresponse = !empty($data->requirefeedbackresponse)
-            || !empty($data->{'stage' . $i . 'requirefeedbackresponse'}) ? 1 : 0;
+        $requirefeedbackresponse = !empty($data->{'stage' . $i . 'requirefeedbackresponse'}) ? 1 : 0;
         $releasegrade = 1;
         $releasefeedback = 1;
 

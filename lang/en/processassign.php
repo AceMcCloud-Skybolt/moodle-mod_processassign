@@ -126,6 +126,7 @@ $string['studentactionsubmit'] = 'Submit your current stage.';
 $string['studentactionwaitfeedback'] = 'Wait for feedback on your submitted stage.';
 $string['studentprogress'] = 'Progress';
 $string['studentprogressvalue'] = 'Stage {$a->current} of {$a->total}';
+$string['stagenotavailable'] = 'This stage is not currently available for submission.';
 $string['submissionrequirements'] = 'Submission requirements';
 $string['submissionreceipt'] = 'Submission receipt';
 $string['submission'] = 'Submission';

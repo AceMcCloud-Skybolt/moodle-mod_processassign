@@ -53,6 +53,26 @@ function processassign_get_student_submissions($processassignid, $userid) {
         ['processassignid' => $processassignid, 'userid' => $userid], '', '*', 0, 0);
 }
 
+function processassign_get_submission_for_stage(array $submissions, int $stageid) {
+    foreach ($submissions as $submission) {
+        if ((int)$submission->stageid === $stageid) {
+            return $submission;
+        }
+    }
+
+    return null;
+}
+
+function processassign_get_stage_by_id(array $stages, int $stageid) {
+    foreach ($stages as $stage) {
+        if ((int)$stage->id === $stageid) {
+            return $stage;
+        }
+    }
+
+    return null;
+}
+
 function processassign_status_label($submission) {
     if (!$submission) {
         return get_string('notsubmitted', 'processassign');
@@ -66,23 +86,43 @@ function processassign_status_label($submission) {
     return get_string('draft', 'moodle');
 }
 
-function processassign_stage_complete($stage, $submission): bool {
+function processassign_stage_requires_feedback_response($processassign, $stage): bool {
+    return !empty($processassign->requirefeedbackresponse) || !empty($stage->requirefeedbackresponse);
+}
+
+function processassign_stage_complete($processassign, $stage, $submission): bool {
     if (!$submission || (int)$submission->status !== PROCESSASSIGN_STATUS_GRADED) {
         return false;
     }
 
-    return empty($stage->requirefeedbackresponse) || !empty($submission->timefeedbackresponded);
+    return !processassign_stage_requires_feedback_response($processassign, $stage)
+        || !empty($submission->timefeedbackresponded);
 }
 
-function processassign_stage_status_label($stage, $submission): string {
-    if (processassign_stage_complete($stage, $submission)) {
+function processassign_stage_status_label($processassign, $stage, $submission): string {
+    if (processassign_stage_complete($processassign, $stage, $submission)) {
         return get_string('complete');
     }
-    if ($submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED && !empty($stage->requirefeedbackresponse)) {
+    if ($submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED
+            && processassign_stage_requires_feedback_response($processassign, $stage)) {
         return get_string('feedbackresponserequired', 'processassign');
     }
 
     return processassign_status_label($submission);
+}
+
+function processassign_student_stage_is_unlocked($processassign, array $stages, array $submissions, int $stageid): bool {
+    foreach ($stages as $stage) {
+        $submission = processassign_get_submission_for_stage($submissions, (int)$stage->id);
+        if ((int)$stage->id === $stageid) {
+            return true;
+        }
+        if (!processassign_stage_complete($processassign, $stage, $submission)) {
+            return false;
+        }
+    }
+
+    return false;
 }
 
 function processassign_render_submission($submission, $context) {
@@ -185,7 +225,7 @@ function processassign_stage_requirements_html($stage): string {
     return $items ? implode('', $items) : '-';
 }
 
-function processassign_render_student_history($stages, $submissions, $context) {
+function processassign_render_student_history($processassign, $stages, $submissions, $context) {
     global $OUTPUT;
 
     $rows = [];
@@ -202,7 +242,8 @@ function processassign_render_student_history($stages, $submissions, $context) {
             continue;
         }
 
-        $details = html_writer::div(processassign_stage_status_label($stage, $submission), 'small text-muted');
+        $details = html_writer::div(processassign_stage_status_label($processassign, $stage, $submission),
+            'small text-muted');
         if ((int)$submission->status === PROCESSASSIGN_STATUS_GRADED) {
             $details .= html_writer::div(get_string('grade', 'processassign') . ': ' .
                 format_float($submission->grade, 2) . ' / ' . format_float($stage->maxgrade, 2), 'small');
@@ -235,7 +276,7 @@ function processassign_render_student_history($stages, $submissions, $context) {
 
 function processassign_render_student_view($processassign, $cm, $course, $context, $stages, $canSubmit, $editoroptions,
         $editstageid) {
-    global $DB, $OUTPUT, $PAGE, $USER;
+    global $OUTPUT, $PAGE, $USER;
 
     $submissions = processassign_get_student_submissions($processassign->id, $USER->id);
     $unlocked = true;
@@ -256,16 +297,17 @@ function processassign_render_student_view($processassign, $cm, $course, $contex
                 break;
             }
         }
-        if (processassign_stage_complete($stageforprogress, $currentsubmission)) {
+        if (processassign_stage_complete($processassign, $stageforprogress, $currentsubmission)) {
             $completedstages++;
             continue;
         }
         $currentstageindex = $index;
-        $currentstatus = processassign_stage_status_label($stageforprogress, $currentsubmission);
+        $currentstatus = processassign_stage_status_label($processassign, $stageforprogress, $currentsubmission);
         if ($currentsubmission && (int)$currentsubmission->status === PROCESSASSIGN_STATUS_SUBMITTED) {
             $currentaction = get_string('studentactionwaitfeedback', 'processassign');
         } else if ($currentsubmission && (int)$currentsubmission->status === PROCESSASSIGN_STATUS_GRADED
-                && !empty($stageforprogress->requirefeedbackresponse) && empty($currentsubmission->timefeedbackresponded)) {
+                && processassign_stage_requires_feedback_response($processassign, $stageforprogress)
+                && empty($currentsubmission->timefeedbackresponded)) {
             $currentaction = get_string('studentactionfeedbackresponse', 'processassign');
         } else {
             $currentaction = get_string('studentactionsubmit', 'processassign');
@@ -291,7 +333,7 @@ function processassign_render_student_view($processassign, $cm, $course, $contex
     );
     echo html_writer::end_div();
 
-    processassign_render_student_history($stages, $submissions, $context);
+    processassign_render_student_history($processassign, $stages, $submissions, $context);
     echo $OUTPUT->heading(get_string('stages', 'processassign'), 3);
 
     foreach ($stages as $stage) {
@@ -321,7 +363,7 @@ function processassign_render_student_view($processassign, $cm, $course, $contex
         echo html_writer::div(get_string('submissionrequirements', 'processassign') . ': ' .
             processassign_stage_requirements_html($stage), 'small mt-2');
         echo html_writer::div(get_string('status', 'processassign') . ': ' .
-            processassign_stage_status_label($stage, $submission), 'mt-2');
+            processassign_stage_status_label($processassign, $stage, $submission), 'mt-2');
 
         if ($submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED) {
             echo html_writer::div(get_string('grade', 'processassign') . ': ' .
@@ -347,7 +389,8 @@ function processassign_render_student_view($processassign, $cm, $course, $contex
         if (!$unlocked) {
             $lockreason = get_string('lockreason:previousstage', 'processassign');
             if ($submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED
-                    && !empty($stage->requirefeedbackresponse) && empty($submission->timefeedbackresponded)) {
+                    && processassign_stage_requires_feedback_response($processassign, $stage)
+                    && empty($submission->timefeedbackresponded)) {
                 $lockreason = get_string('lockreason:feedbackresponse', 'processassign');
             }
             echo $OUTPUT->notification(get_string('notopenyet', 'processassign'), 'info');
@@ -360,7 +403,8 @@ function processassign_render_student_view($processassign, $cm, $course, $contex
             echo $OUTPUT->notification(get_string('submissionsclosed', 'processassign'), 'warning');
             echo html_writer::div(get_string('lockreason:cutoff', 'processassign'), 'small text-muted');
         } else if ($canSubmit && !$formrendered && $submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED
-                && !empty($stage->requirefeedbackresponse) && empty($submission->timefeedbackresponded)) {
+                && processassign_stage_requires_feedback_response($processassign, $stage)
+                && empty($submission->timefeedbackresponded)) {
             echo $OUTPUT->heading(get_string('feedbackresponserequired', 'processassign'), 5);
 
             $mform = new \mod_processassign\form\feedback_response_form($PAGE->url, [
@@ -373,16 +417,6 @@ function processassign_render_student_view($processassign, $cm, $course, $contex
                     'format' => FORMAT_HTML,
                 ],
             ]);
-
-            if ($data = $mform->get_data()) {
-                $submission->feedbackresponse = $data->feedbackresponseeditor['text'];
-                $submission->feedbackresponseformat = $data->feedbackresponseeditor['format'];
-                $submission->timefeedbackresponded = time();
-                $submission->timemodified = time();
-                $DB->update_record('processassign_subs', $submission);
-                redirect($PAGE->url, get_string('feedbackresponsesaved', 'processassign'), null,
-                    \core\output\notification::NOTIFY_SUCCESS);
-            }
 
             $mform->display();
             $formrendered = true;
@@ -425,41 +459,6 @@ function processassign_render_student_view($processassign, $cm, $course, $contex
             }
             $mform->set_data($formdata);
 
-            if ($data = $mform->get_data()) {
-                $now = time();
-                $submitted = empty($processassign->submissiondrafts) || !empty($data->submitstage);
-                $record = (object)[
-                    'processassignid' => $processassign->id,
-                    'stageid' => $stage->id,
-                    'userid' => $USER->id,
-                    'submissiontext' => $data->submissioneditor['text'] ?? '',
-                    'submissionformat' => $data->submissioneditor['format'] ?? FORMAT_HTML,
-                    'status' => $submitted ? PROCESSASSIGN_STATUS_SUBMITTED : PROCESSASSIGN_STATUS_DRAFT,
-                    'timemodified' => $now,
-                    'timesubmitted' => $submitted ? $now : ($submission ? $submission->timesubmitted : 0),
-                ];
-
-                if ($submission) {
-                    $record->id = $submission->id;
-                    $DB->update_record('processassign_subs', $record);
-                    $submissionid = $submission->id;
-                } else {
-                    $record->timecreated = $now;
-                    $submissionid = $DB->insert_record('processassign_subs', $record);
-                }
-
-                if (!empty($stage->submissionfile)) {
-                    file_save_draft_area_files($data->submissionfiles, $context->id, 'mod_processassign', 'submission',
-                        $submissionid, $filemanageroptions);
-                }
-                if ($submitted && !empty($processassign->sendnotifications)) {
-                    processassign_notify_graders($processassign, $cm, $course, $context, $stage, $USER);
-                }
-                redirect(new moodle_url('/mod/processassign/view.php', ['id' => $cm->id]),
-                    get_string($submitted ? 'submissionsaved' : 'draftsaved', 'processassign'), null,
-                    \core\output\notification::NOTIFY_SUCCESS);
-            }
-
             $mform->display();
             $formrendered = true;
         }
@@ -474,7 +473,7 @@ function processassign_render_student_view($processassign, $cm, $course, $contex
             echo html_writer::end_div();
         }
 
-        $unlocked = processassign_stage_complete($stage, $submission);
+        $unlocked = processassign_stage_complete($processassign, $stage, $submission);
     }
 }
 
@@ -532,11 +531,135 @@ function processassign_notify_student($processassign, $cm, $course, $stage, $stu
     email_to_user($student, core_user::get_support_user(), $subject, $body);
 }
 
+function processassign_handle_student_post($processassign, $cm, $course, $context, array $stages, array $editoroptions) {
+    global $DB, $PAGE, $USER;
+
+    if (!data_submitted() || !confirm_sesskey()) {
+        return;
+    }
+
+    $stageid = optional_param('stageid', 0, PARAM_INT);
+    $submissionid = optional_param('submissionid', 0, PARAM_INT);
+    $submissions = processassign_get_student_submissions($processassign->id, $USER->id);
+
+    if ($stageid) {
+        $stage = processassign_get_stage_by_id($stages, $stageid);
+        $submission = processassign_get_submission_for_stage($submissions, $stageid);
+        if (!$stage || !processassign_student_stage_is_unlocked($processassign, $stages, $submissions, $stageid)
+                || !processassign_student_can_submit_stage($processassign, $stage, $submission)
+                || (!empty($processassign->allowsubmissionsfromdate) && time() < (int)$processassign->allowsubmissionsfromdate)) {
+            redirect($PAGE->url, get_string('stagenotavailable', 'processassign'), null,
+                \core\output\notification::NOTIFY_ERROR);
+        }
+
+        $draftitemid = file_get_submitted_draft_itemid('submissionfiles');
+        $itemid = $submission ? $submission->id : 0;
+        $filemanageroptions = [
+            'subdirs' => 0,
+            'maxbytes' => !empty($stage->maxbytes) ? $stage->maxbytes : $course->maxbytes,
+            'maxfiles' => !empty($stage->maxfiles) ? $stage->maxfiles : 5,
+            'accepted_types' => !empty($stage->acceptedfiletypes) ? $stage->acceptedfiletypes : '*',
+        ];
+        file_prepare_draft_area($draftitemid, $context->id, 'mod_processassign', 'submission', $itemid,
+            $filemanageroptions);
+
+        $mform = new \mod_processassign\form\submission_form($PAGE->url, [
+            'stage' => $stage,
+            'processassign' => $processassign,
+            'options' => ['editor' => $editoroptions, 'filemanager' => $filemanageroptions],
+        ]);
+        if (!$data = $mform->get_data()) {
+            return;
+        }
+        if ((int)$data->stageid !== (int)$stage->id) {
+            redirect($PAGE->url, get_string('stagenotavailable', 'processassign'), null,
+                \core\output\notification::NOTIFY_ERROR);
+        }
+
+        $now = time();
+        $submitted = empty($processassign->submissiondrafts) || !empty($data->submitstage)
+            || ($submission && (int)$submission->status === PROCESSASSIGN_STATUS_SUBMITTED);
+        $timesubmitted = 0;
+        if ($submitted) {
+            $timesubmitted = ($submission && !empty($submission->timesubmitted)) ? $submission->timesubmitted : $now;
+        } else if ($submission) {
+            $timesubmitted = $submission->timesubmitted;
+        }
+        $record = (object)[
+            'processassignid' => $processassign->id,
+            'stageid' => $stage->id,
+            'userid' => $USER->id,
+            'submissiontext' => $data->submissioneditor['text'] ?? '',
+            'submissionformat' => $data->submissioneditor['format'] ?? FORMAT_HTML,
+            'status' => $submitted ? PROCESSASSIGN_STATUS_SUBMITTED : PROCESSASSIGN_STATUS_DRAFT,
+            'timemodified' => $now,
+            'timesubmitted' => $timesubmitted,
+        ];
+
+        if ($submission) {
+            $record->id = $submission->id;
+            $DB->update_record('processassign_subs', $record);
+            $submissionid = $submission->id;
+        } else {
+            $record->timecreated = $now;
+            $submissionid = $DB->insert_record('processassign_subs', $record);
+        }
+
+        if (!empty($stage->submissionfile)) {
+            file_save_draft_area_files($data->submissionfiles, $context->id, 'mod_processassign', 'submission',
+                $submissionid, $filemanageroptions);
+        }
+        if ($submitted && !empty($processassign->sendnotifications)
+                && (!$submission || (int)$submission->status !== PROCESSASSIGN_STATUS_SUBMITTED)) {
+            processassign_notify_graders($processassign, $cm, $course, $context, $stage, $USER);
+        }
+
+        redirect(new moodle_url('/mod/processassign/view.php', ['id' => $cm->id]),
+            get_string($submitted ? 'submissionsaved' : 'draftsaved', 'processassign'), null,
+            \core\output\notification::NOTIFY_SUCCESS);
+    }
+
+    if ($submissionid) {
+        $submission = $DB->get_record('processassign_subs', [
+            'id' => $submissionid,
+            'processassignid' => $processassign->id,
+            'userid' => $USER->id,
+        ]);
+        $stage = $submission ? processassign_get_stage_by_id($stages, (int)$submission->stageid) : null;
+        if (!$submission || !$stage || (int)$submission->status !== PROCESSASSIGN_STATUS_GRADED
+                || !processassign_stage_requires_feedback_response($processassign, $stage)
+                || !empty($submission->timefeedbackresponded)) {
+            redirect($PAGE->url, get_string('stagenotavailable', 'processassign'), null,
+                \core\output\notification::NOTIFY_ERROR);
+        }
+
+        $mform = new \mod_processassign\form\feedback_response_form($PAGE->url, [
+            'options' => ['editor' => $editoroptions],
+        ]);
+        if (!$data = $mform->get_data()) {
+            return;
+        }
+        if ((int)$data->submissionid !== (int)$submission->id) {
+            redirect($PAGE->url, get_string('stagenotavailable', 'processassign'), null,
+                \core\output\notification::NOTIFY_ERROR);
+        }
+
+        $submission->feedbackresponse = $data->feedbackresponseeditor['text'];
+        $submission->feedbackresponseformat = $data->feedbackresponseeditor['format'];
+        $submission->timefeedbackresponded = time();
+        $submission->timemodified = time();
+        $DB->update_record('processassign_subs', $submission);
+        redirect($PAGE->url, get_string('feedbackresponsesaved', 'processassign'), null,
+            \core\output\notification::NOTIFY_SUCCESS);
+    }
+}
+
 function processassign_dashboard_status($processassign, $stage, $submission): array {
-    if (processassign_stage_complete($stage, $submission)) {
+    if (processassign_stage_complete($processassign, $stage, $submission)) {
         return ['complete', get_string('complete')];
     }
-    if ($submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED && !empty($stage->requirefeedbackresponse)) {
+    if ($submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED
+            && processassign_stage_requires_feedback_response($processassign, $stage)) {
         return ['awaitingresponse', get_string('awaitingresponse', 'processassign')];
     }
     if ($submission && (int)$submission->status === PROCESSASSIGN_STATUS_SUBMITTED) {
@@ -707,6 +830,20 @@ function processassign_current_gradebook_grade_text($processassign, $stage, $sub
 
 function processassign_student_can_edit_submission($processassign, $stage, $submission): bool {
     if (!$submission || (int)$submission->status === PROCESSASSIGN_STATUS_GRADED) {
+        return false;
+    }
+    if (!empty($processassign->cutoffdate) && time() > (int)$processassign->cutoffdate) {
+        return false;
+    }
+    $duedate = processassign_stage_due_date($processassign, $stage);
+    if (!empty($duedate) && time() > $duedate) {
+        return false;
+    }
+    return true;
+}
+
+function processassign_student_can_submit_stage($processassign, $stage, $submission): bool {
+    if ($submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED) {
         return false;
     }
     if (!empty($processassign->cutoffdate) && time() > (int)$processassign->cutoffdate) {
@@ -1181,6 +1318,12 @@ function processassign_handle_grade_view($processassign, $cm, $course, $context,
     exit;
 }
 
+$stages = processassign_get_stages($processassign->id);
+
+if ($canSubmit && !$canGrade && $action === 'view' && $stages) {
+    processassign_handle_student_post($processassign, $cm, $course, $context, $stages, $editoroptions);
+}
+
 if ($action === 'grade' && $submissionid) {
     processassign_handle_grade_view($processassign, $cm, $course, $context, $submissionid, $editoroptions);
 }
@@ -1211,7 +1354,6 @@ if (!empty($processassign->alwaysshowdescription)
     echo processassign_render_intro_attachments($context);
 }
 
-$stages = processassign_get_stages($processassign->id);
 if (!$stages) {
     echo $OUTPUT->notification(get_string('nostages', 'processassign'), 'warning');
 } else {
