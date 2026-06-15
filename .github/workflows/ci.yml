@@ -33,6 +33,8 @@ jobs:
     steps:
       - name: Checkout plugin
         uses: actions/checkout@v4
+        with:
+          path: plugin
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -56,7 +58,7 @@ jobs:
           echo "$(pwd)/ci/vendor/bin" >> "$GITHUB_PATH"
 
       - name: Install Moodle
-        run: moodle-plugin-ci install --plugin . --db-type=mariadb --db-host=127.0.0.1 --db-user=root --db-pass=root --no-init
+        run: moodle-plugin-ci install --plugin ./plugin --db-type=mariadb --db-host=127.0.0.1 --db-user=root --db-pass=root --no-init
         env:
           DB: mariadb
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}
