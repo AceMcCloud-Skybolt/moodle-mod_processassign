@@ -42,6 +42,13 @@ jobs:
           ini-values: max_input_vars=5000
           coverage: none
 
+      - name: Install Moodle locale
+        run: |
+          sudo sed -i 's/^# *en_AU.UTF-8 UTF-8/en_AU.UTF-8 UTF-8/' /etc/locale.gen
+          sudo locale-gen en_AU.UTF-8
+          echo "LANG=en_AU.UTF-8" >> "$GITHUB_ENV"
+          echo "LC_ALL=en_AU.UTF-8" >> "$GITHUB_ENV"
+
       - name: Install moodle-plugin-ci
         run: |
           composer create-project --no-dev --prefer-dist --no-interaction moodlehq/moodle-plugin-ci ci ^4
