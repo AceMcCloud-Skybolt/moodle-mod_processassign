@@ -497,8 +497,58 @@ function processassign_get_stage_grading_instance($context, $stage, $submission)
     return $gradinginstance;
 }
 
+function processassign_filter_graders_for_student_groups(array $graders, $cm, $course, $context, $student): array {
+    global $CFG;
+
+    require_once($CFG->dirroot . '/group/lib.php');
+
+    if (groups_get_activity_groupmode($cm, $course) !== SEPARATEGROUPS) {
+        return $graders;
+    }
+
+    $groupingid = $cm->groupingid ?? 0;
+    $studentgroups = groups_get_all_groups($course->id, $student->id, $groupingid, 'g.id');
+    $studentgroupids = array_map('intval', array_keys($studentgroups ?: []));
+
+    return array_filter($graders, function($grader) use ($course, $context, $groupingid, $studentgroupids) {
+        if (has_capability('moodle/site:accessallgroups', $context, $grader->id)) {
+            return true;
+        }
+        if (!$studentgroupids) {
+            return false;
+        }
+        $gradergroups = groups_get_all_groups($course->id, $grader->id, $groupingid, 'g.id');
+        $gradergroupids = array_map('intval', array_keys($gradergroups ?: []));
+        return (bool)array_intersect($studentgroupids, $gradergroupids);
+    });
+}
+
+function processassign_send_message(string $name, $userfrom, $userto, string $subject, string $body,
+        moodle_url $url, string $urlname, array $customdata = []): void {
+    $message = new \core\message\message();
+    $message->component = 'mod_processassign';
+    $message->name = $name;
+    $message->userfrom = $userfrom;
+    $message->userto = $userto;
+    $message->subject = $subject;
+    $message->fullmessageformat = FORMAT_HTML;
+    $message->fullmessage = $body;
+    $message->fullmessagehtml = html_writer::tag('p', s($body));
+    $message->fullmessagesms = $subject;
+    $message->smallmessage = $subject;
+    $message->notification = 1;
+    $message->contexturl = $url->out(false);
+    $message->contexturlname = $urlname;
+    if ($customdata) {
+        $message->customdata = $customdata;
+    }
+
+    message_send($message);
+}
+
 function processassign_notify_graders($processassign, $cm, $course, $context, $stage, $student) {
     $graders = get_enrolled_users($context, 'mod/processassign:grade');
+    $graders = processassign_filter_graders_for_student_groups($graders, $cm, $course, $context, $student);
     if (!$graders) {
         return;
     }
@@ -514,11 +564,18 @@ function processassign_notify_graders($processassign, $cm, $course, $context, $s
     ]);
 
     foreach ($graders as $grader) {
-        email_to_user($grader, core_user::get_support_user(), $subject, $body);
+        processassign_send_message('grader_notification', $student, $grader, $subject, $body, $url,
+            format_string($processassign->name), [
+                'processassignid' => $processassign->id,
+                'stageid' => $stage->id,
+                'studentid' => $student->id,
+            ]);
     }
 }
 
 function processassign_notify_student($processassign, $cm, $course, $stage, $student) {
+    global $USER;
+
     $subject = get_string('gradenotificationsubject', 'processassign', format_string($processassign->name));
     $url = new moodle_url('/mod/processassign/view.php', ['id' => $cm->id]);
     $body = get_string('gradenotificationbody', 'processassign', (object)[
@@ -528,7 +585,13 @@ function processassign_notify_student($processassign, $cm, $course, $stage, $stu
         'url' => $url->out(false),
     ]);
 
-    email_to_user($student, core_user::get_support_user(), $subject, $body);
+    $userfrom = !empty($USER->id) ? $USER : core_user::get_noreply_user();
+    processassign_send_message('student_notification', $userfrom, $student, $subject, $body, $url,
+        format_string($processassign->name), [
+            'processassignid' => $processassign->id,
+            'stageid' => $stage->id,
+            'studentid' => $student->id,
+        ]);
 }
 
 function processassign_handle_student_post($processassign, $cm, $course, $context, array $stages, array $editoroptions) {

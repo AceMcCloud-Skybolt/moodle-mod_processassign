@@ -108,7 +108,7 @@ These screenshots show the current prototype in a Moodle sandbox with sample sta
 - Allowed attempts and grant-attempt settings are captured in the UI/schema but need deeper implementation before production use.
 - Backup and restore scaffolding is implemented for activity settings, stages, user submissions, and submission files, but needs deeper testing.
 - Group submissions, marking workflow, blind marking, marking allocation, extension overrides, and full submission-attempt history are not implemented yet.
-- Notifications currently use direct email rather than Moodle message providers.
+- Notifications use Moodle message providers, with basic separate-groups filtering for grader alerts, but still need broader production testing.
 - The teacher review interface is intentionally basic.
 - Stage category mode creates Moodle gradebook structures, but wider testing is needed for edge cases such as switching modes after manual gradebook changes.
 - Stage editing after student submissions is conservative but still needs stronger UX and validation.
@@ -129,4 +129,4 @@ These screenshots show the current prototype in a Moodle sandbox with sample sta
 - Confirm `version.php` targets the intended Moodle branch before wider testing.
 - Moodle 5.1 compatibility smoke tested against the local sandbox, including install/upgrade, settings form, submissions dashboard, grader page, and gradebook page.
 - Ask reviewers to focus first on architecture, Moodle API usage, advanced grading integration, privacy implementation, and whether the standalone activity approach is correct.
-- Do not treat this as production-ready until backup/restore has been fully exercised, automated tests, group workflows, and message providers are implemented.
+- Do not treat this as production-ready until backup/restore has been fully exercised, automated tests, group workflows, and notification preferences have been tested in a real pilot configuration.
