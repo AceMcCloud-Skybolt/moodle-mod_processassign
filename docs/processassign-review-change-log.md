@@ -62,3 +62,9 @@
 - Added a prominent assignment-level feedback response gate so staff can require feedback responses across all stages without hunting for per-stage checkboxes.
 - Replaced feedback type labels with local plugin language strings to avoid `[[feedbackcomments]]` / `[[feedbackfiles]]` display issues on sites where Assignment feedback subplugin strings are unavailable.
 - Added light CSS to make the multi-stage advanced grading method selector stack more cleanly.
+
+## 2026-06-18 review handoff and screenshot refresh
+
+- Added `docs/claude-review-update-2026-06-18.md` as a concise reviewer handoff covering current status, recent Moodle 5.1 hardening, CI evidence, review questions, and remaining backlog.
+- Replaced the screenshot set with updated annotated Moodle 5.1 staff and student workflow images under `docs/screenshots`.
+- Refreshed the README screenshot section and prototype limitations to reflect the initial PHPUnit/GitHub Actions coverage now in place.

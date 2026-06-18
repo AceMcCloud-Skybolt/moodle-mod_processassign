@@ -49,7 +49,7 @@ The goal is to support assessment designs where students submit evidence in mult
 
 ## Install in a Moodle sandbox
 
-Tested in a local sandbox on Moodle **5.1.4+ (Build: 20260604)**. Moodle 5.1 places web-accessible code under the `public` directory, so in that layout copy this folder to:
+Tested in a local sandbox on Moodle **5.1.5 (Build: 20260608)** and in GitHub Actions against Moodle `MOODLE_501_STABLE`. Moodle 5.1 places web-accessible code under the `public` directory, so in that layout copy this folder to:
 
 ```text
 public/mod/processassign
@@ -72,21 +72,25 @@ The activity should then appear in the Moodle activity picker as **Process assig
 
 ## Screenshots
 
-These screenshots show the current prototype in a Moodle sandbox with sample staged submissions.
+These annotated screenshots show the current Moodle 5.1 prototype with sample staged submissions across staff and student workflows.
 
-![Full submissions dashboard](docs/screenshots/01-dashboard-overview.png)
+![Staff overview with grading summary](docs/screenshots/01-staff-overview.png)
 
-![Submissions dashboard filters and stage-aware rows](docs/screenshots/02-submissions-dashboard.png)
+![Staff submissions dashboard with stage-aware filters](docs/screenshots/02-staff-submissions-dashboard.png)
 
-![Feedback response queue](docs/screenshots/03-feedback-response-queue.png)
+![Awaiting feedback queue](docs/screenshots/03-awaiting-feedback-queue.png)
 
 ![Stage grading workflow](docs/screenshots/04-stage-grader.png)
 
-![Per-stage configuration](docs/screenshots/05-stage-configuration.png)
+![Assignment-style general settings](docs/screenshots/05-settings-general.png)
 
-![Gradebook integration](docs/screenshots/06-gradebook-integration.png)
+![Per-stage configuration](docs/screenshots/06-stage-configuration.png)
 
-![Student workflow](docs/screenshots/07-student-workflow.png)
+![Gradebook integration](docs/screenshots/07-gradebook-integration.png)
+
+![Student feedback response gate](docs/screenshots/08-student-feedback-gate.png)
+
+![Student completed workflow](docs/screenshots/09-student-completed-workflow.png)
 
 ## Suggested smoke test
 
@@ -112,7 +116,7 @@ These screenshots show the current prototype in a Moodle sandbox with sample sta
 - The teacher review interface is intentionally basic.
 - Stage category mode creates Moodle gradebook structures, but wider testing is needed for edge cases such as switching modes after manual gradebook changes.
 - Stage editing after student submissions is conservative but still needs stronger UX and validation.
-- There are no PHPUnit or Behat tests yet.
+- Initial PHPUnit coverage and GitHub Actions are in place; Behat coverage is not yet present.
 
 ## Review questions
 
@@ -128,5 +132,6 @@ These screenshots show the current prototype in a Moodle sandbox with sample sta
 - Add this plugin folder as the repository root, not the full Moodle installation.
 - Confirm `version.php` targets the intended Moodle branch before wider testing.
 - Moodle 5.1 compatibility smoke tested against the local sandbox, including install/upgrade, settings form, submissions dashboard, grader page, and gradebook page.
+- Reviewer handoff note: see `docs/claude-review-update-2026-06-18.md`.
 - Ask reviewers to focus first on architecture, Moodle API usage, advanced grading integration, privacy implementation, and whether the standalone activity approach is correct.
 - Do not treat this as production-ready until backup/restore has been fully exercised, automated tests, group workflows, and notification preferences have been tested in a real pilot configuration.
