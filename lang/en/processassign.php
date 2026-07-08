@@ -1,5 +1,26 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * English language strings for the Process Assignment module.
+ *
+ * @package    mod_processassign
+ * @copyright  2026 Murdoch Business School
+ * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ */
 
 $string['modulename'] = 'Process assignment';
 $string['modulename_help'] = 'Use a process assignment to collect and grade staged submissions over time.';
@@ -25,6 +46,9 @@ $string['privacy:metadata:processassign_subs:timesubmitted'] = 'The time the sta
 $string['privacy:metadata:processassign_subs:userid'] = 'The user who made the stage submission.';
 $string['aggregategrade'] = 'Aggregate grade';
 $string['allstages'] = 'All stages';
+$string['attemptreopenmethod_none'] = 'Never';
+$string['stagecount'] = 'Stages';
+$string['stagecount_help'] = 'A process assignment is made up of up to five sequential stages. Choose how many stages to use and configure each one below. Students must complete each stage before the next one is unlocked.';
 $string['awaitingfeedback'] = 'Awaiting feedback';
 $string['awaitingresponse'] = 'Awaiting student response';
 $string['availableafterfeedback'] = 'Available after previous stage is graded';

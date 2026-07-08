@@ -1,13 +1,44 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * Instance settings form for the Process Assignment module.
+ *
+ * @package    mod_processassign
+ * @copyright  2026 Murdoch Business School
+ * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ */
 
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/course/moodleform_mod.php');
 require_once($CFG->dirroot . '/mod/processassign/lib.php');
 
+/**
+ * Instance settings form for the Process Assignment module.
+ *
+ * @package    mod_processassign
+ * @copyright  2026 Murdoch Business School
+ * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ */
 class mod_processassign_mod_form extends moodleform_mod {
 
+    /**
+     * Define the form elements.
+     */
     public function definition() {
         global $CFG, $COURSE, $PAGE;
 
@@ -17,7 +48,7 @@ class mod_processassign_mod_form extends moodleform_mod {
             'context' => $this->context,
             'maxfiles' => EDITOR_UNLIMITED_FILES,
             'maxbytes' => $COURSE->maxbytes,
-            'trusttext' => true,
+            'trusttext' => false,
         ];
 
         $mform->addElement('header', 'general', get_string('general', 'form'));
@@ -250,6 +281,13 @@ class mod_processassign_mod_form extends moodleform_mod {
         $this->add_action_buttons();
     }
 
+    /**
+     * Validate the form data.
+     *
+     * @param array $data submitted form data
+     * @param array $files submitted files
+     * @return array field name => error message
+     */
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
 
@@ -295,6 +333,11 @@ class mod_processassign_mod_form extends moodleform_mod {
         return $errors;
     }
 
+    /**
+     * Prepare default values, draft file areas and stage fields before the form is displayed.
+     *
+     * @param array $defaultvalues default form values, modified in place
+     */
     public function data_preprocessing(&$defaultvalues) {
         global $DB;
 

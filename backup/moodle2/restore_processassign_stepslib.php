@@ -1,8 +1,45 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
+/**
+ * Restore structure step for the Process Assignment module.
+ *
+ * @package    mod_processassign
+ * @copyright  2026 Murdoch Business School
+ * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ */
+
+defined('MOODLE_INTERNAL') || die();
+
+require_once($CFG->dirroot . '/mod/processassign/lib.php');
+
+/**
+ * Structure step to restore a processassign activity, its stages and submissions.
+ *
+ * @package    mod_processassign
+ * @copyright  2026 Murdoch Business School
+ * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ */
 class restore_processassign_activity_structure_step extends restore_activity_structure_step {
 
+    /**
+     * Define the restore paths.
+     *
+     * @return restore_path_element[] the paths wrapped into the activity structure
+     */
     protected function define_structure() {
         $paths = [];
         $paths[] = new restore_path_element('processassign', '/activity/processassign');
@@ -15,6 +52,11 @@ class restore_processassign_activity_structure_step extends restore_activity_str
         return $this->prepare_activity_structure($paths);
     }
 
+    /**
+     * Restore a processassign instance record.
+     *
+     * @param array $data the record data from the backup file
+     */
     protected function process_processassign($data) {
         global $DB;
 
@@ -34,6 +76,11 @@ class restore_processassign_activity_structure_step extends restore_activity_str
         $this->apply_activity_instance($newitemid);
     }
 
+    /**
+     * Restore a stage record.
+     *
+     * @param array $data the record data from the backup file
+     */
     protected function process_processassign_stage($data) {
         global $DB;
 
@@ -46,6 +93,11 @@ class restore_processassign_activity_structure_step extends restore_activity_str
         $this->set_mapping('processassign_stage', $oldid, $newitemid);
     }
 
+    /**
+     * Restore a submission record.
+     *
+     * @param array $data the record data from the backup file
+     */
     protected function process_processassign_submission($data) {
         global $DB;
 
@@ -60,8 +112,11 @@ class restore_processassign_activity_structure_step extends restore_activity_str
         $this->set_mapping('processassign_submission', $oldid, $newitemid, true);
     }
 
+    /**
+     * Restore the related file areas and rebuild the gradebook entries.
+     */
     protected function after_execute() {
-        global $CFG, $DB;
+        global $DB;
 
         $this->add_related_files('mod_processassign', 'intro', null);
         $this->add_related_files('mod_processassign', 'introattachment', null);
@@ -69,7 +124,6 @@ class restore_processassign_activity_structure_step extends restore_activity_str
         $this->add_related_files('mod_processassign', 'submission', 'processassign_submission');
         $this->add_related_files('mod_processassign', 'feedback', 'processassign_submission');
 
-        require_once($CFG->dirroot . '/mod/processassign/lib.php');
         if ($processassign = $DB->get_record('processassign', ['id' => $this->task->get_activityid()])) {
             processassign_update_grades($processassign);
         }

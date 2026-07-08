@@ -1,8 +1,35 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * Upgrade steps for the Process Assignment module.
+ *
+ * @package    mod_processassign
+ * @copyright  2026 Murdoch Business School
+ * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ */
 
 defined('MOODLE_INTERNAL') || die();
 
+/**
+ * Upgrade the processassign database schema.
+ *
+ * @param int $oldversion the currently installed version
+ * @return bool true on success
+ */
 function xmldb_processassign_upgrade($oldversion) {
     global $DB;
 
@@ -178,10 +205,6 @@ function xmldb_processassign_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026052900, 'processassign');
     }
 
-    if ($oldversion < 2026061200) {
-        upgrade_mod_savepoint(true, 2026061200, 'processassign');
-    }
-
     if ($oldversion < 2026061201) {
         $table = new xmldb_table('processassign');
         $fields = [
@@ -198,18 +221,6 @@ function xmldb_processassign_upgrade($oldversion) {
         }
 
         upgrade_mod_savepoint(true, 2026061201, 'processassign');
-    }
-
-    if ($oldversion < 2026061202) {
-        upgrade_mod_savepoint(true, 2026061202, 'processassign');
-    }
-
-    if ($oldversion < 2026061203) {
-        upgrade_mod_savepoint(true, 2026061203, 'processassign');
-    }
-
-    if ($oldversion < 2026061500) {
-        upgrade_mod_savepoint(true, 2026061500, 'processassign');
     }
 
     return true;

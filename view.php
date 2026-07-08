@@ -1,5 +1,26 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * View, submit and grade a Process Assignment activity.
+ *
+ * @package    mod_processassign
+ * @copyright  2026 Murdoch Business School
+ * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ */
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/mod/processassign/lib.php');
@@ -30,9 +51,9 @@ $PAGE->requires->css('/mod/processassign/styles.css');
 $completion = new completion_info($course);
 $completion->set_module_viewed($cm);
 
-$canSubmit = has_capability('mod/processassign:submit', $context);
-$canGrade = has_capability('mod/processassign:grade', $context);
-if ($canGrade && ($action === 'view' || $action === 'submissions')) {
+$cansubmit = has_capability('mod/processassign:submit', $context);
+$cangrade = has_capability('mod/processassign:grade', $context);
+if ($cangrade && ($action === 'view' || $action === 'submissions')) {
     $PAGE->set_secondary_active_tab('mod_processassign_submissions');
 }
 
@@ -42,17 +63,37 @@ $editoroptions = [
     'context' => $context,
 ];
 
+/**
+ * Fetch all stages for an instance ordered by sort order.
+ *
+ * @param int $processassignid the instance id
+ * @return array stage records
+ */
 function processassign_get_stages($processassignid) {
     global $DB;
     return $DB->get_records('processassign_stages', ['processassignid' => $processassignid], 'sortorder ASC');
 }
 
+/**
+ * Fetch all submissions by a user for an instance.
+ *
+ * @param int $processassignid the instance id
+ * @param int $userid the user id
+ * @return array submission records
+ */
 function processassign_get_student_submissions($processassignid, $userid) {
     global $DB;
     return $DB->get_records('processassign_subs',
         ['processassignid' => $processassignid, 'userid' => $userid], '', '*', 0, 0);
 }
 
+/**
+ * Find the submission for a given stage in a list of submissions.
+ *
+ * @param array $submissions submission records
+ * @param int $stageid the stage id
+ * @return stdClass|null the submission, or null if not found
+ */
 function processassign_get_submission_for_stage(array $submissions, int $stageid) {
     foreach ($submissions as $submission) {
         if ((int)$submission->stageid === $stageid) {
@@ -63,6 +104,13 @@ function processassign_get_submission_for_stage(array $submissions, int $stageid
     return null;
 }
 
+/**
+ * Find a stage by id in a list of stages.
+ *
+ * @param array $stages stage records
+ * @param int $stageid the stage id
+ * @return stdClass|null the stage, or null if not found
+ */
 function processassign_get_stage_by_id(array $stages, int $stageid) {
     foreach ($stages as $stage) {
         if ((int)$stage->id === $stageid) {
@@ -73,6 +121,12 @@ function processassign_get_stage_by_id(array $stages, int $stageid) {
     return null;
 }
 
+/**
+ * Return the localised status label for a submission.
+ *
+ * @param stdClass|null $submission the submission record, or null if none
+ * @return string the status label
+ */
 function processassign_status_label($submission) {
     if (!$submission) {
         return get_string('notsubmitted', 'processassign');
@@ -86,10 +140,25 @@ function processassign_status_label($submission) {
     return get_string('draft', 'moodle');
 }
 
+/**
+ * Whether a stage requires the student to respond to feedback before continuing.
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $stage the stage record
+ * @return bool true if a feedback response is required
+ */
 function processassign_stage_requires_feedback_response($processassign, $stage): bool {
     return !empty($processassign->requirefeedbackresponse) || !empty($stage->requirefeedbackresponse);
 }
 
+/**
+ * Whether a stage is complete for the submitting student.
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $stage the stage record
+ * @param stdClass|null $submission the submission record, or null if none
+ * @return bool true if the stage is complete
+ */
 function processassign_stage_complete($processassign, $stage, $submission): bool {
     if (!$submission || (int)$submission->status !== PROCESSASSIGN_STATUS_GRADED) {
         return false;
@@ -99,6 +168,14 @@ function processassign_stage_complete($processassign, $stage, $submission): bool
         || !empty($submission->timefeedbackresponded);
 }
 
+/**
+ * Return the localised stage status label, taking feedback response requirements into account.
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $stage the stage record
+ * @param stdClass|null $submission the submission record, or null if none
+ * @return string the status label
+ */
 function processassign_stage_status_label($processassign, $stage, $submission): string {
     if (processassign_stage_complete($processassign, $stage, $submission)) {
         return get_string('complete');
@@ -111,6 +188,15 @@ function processassign_stage_status_label($processassign, $stage, $submission): 
     return processassign_status_label($submission);
 }
 
+/**
+ * Whether a stage is unlocked for a student (all earlier stages complete).
+ *
+ * @param stdClass $processassign the instance record
+ * @param array $stages all stage records in order
+ * @param array $submissions the student's submission records
+ * @param int $stageid the stage to check
+ * @return bool true if the stage is unlocked
+ */
 function processassign_student_stage_is_unlocked($processassign, array $stages, array $submissions, int $stageid): bool {
     foreach ($stages as $stage) {
         $submission = processassign_get_submission_for_stage($submissions, (int)$stage->id);
@@ -125,6 +211,13 @@ function processassign_student_stage_is_unlocked($processassign, array $stages, 
     return false;
 }
 
+/**
+ * Render a submission's text and files as HTML.
+ *
+ * @param stdClass $submission the submission record
+ * @param context_module $context the module context
+ * @return string HTML for the submission
+ */
 function processassign_render_submission($submission, $context) {
     global $OUTPUT;
 
@@ -149,6 +242,13 @@ function processassign_render_submission($submission, $context) {
     return $html ?: $OUTPUT->notification(get_string('nothingtodisplay'), 'info');
 }
 
+/**
+ * Render links to the feedback files attached to a submission.
+ *
+ * @param stdClass $submission the submission record
+ * @param context_module $context the module context
+ * @return string HTML for the feedback files, or an empty string if none
+ */
 function processassign_render_feedback_files($submission, $context) {
     $fs = get_file_storage();
     $files = $fs->get_area_files($context->id, 'mod_processassign', 'feedback', $submission->id, 'filename', false);
@@ -166,6 +266,13 @@ function processassign_render_feedback_files($submission, $context) {
     return html_writer::div(html_writer::alist($items), 'mt-2 alert alert-secondary');
 }
 
+/**
+ * Render the activity instructions block.
+ *
+ * @param stdClass $processassign the instance record
+ * @param context_module $context the module context
+ * @return string HTML for the instructions, or an empty string if none
+ */
 function processassign_render_activity_instructions($processassign, $context): string {
     if (trim($processassign->activity ?? '') === '') {
         return '';
@@ -181,6 +288,12 @@ function processassign_render_activity_instructions($processassign, $context): s
     );
 }
 
+/**
+ * Render links to the intro attachment files.
+ *
+ * @param context_module $context the module context
+ * @return string HTML for the attachments, or an empty string if none
+ */
 function processassign_render_intro_attachments($context): string {
     $fs = get_file_storage();
     $files = $fs->get_area_files($context->id, 'mod_processassign', 'introattachment', 0, 'filename', false);
@@ -202,6 +315,12 @@ function processassign_render_intro_attachments($context): string {
     );
 }
 
+/**
+ * Render the submission requirement badges for a stage.
+ *
+ * @param stdClass $stage the stage record
+ * @return string HTML badges, or '-' if the stage has no requirements
+ */
 function processassign_stage_requirements_html($stage): string {
     $items = [];
     if (!empty($stage->submissiononlinetext)) {
@@ -225,6 +344,14 @@ function processassign_stage_requirements_html($stage): string {
     return $items ? implode('', $items) : '-';
 }
 
+/**
+ * Output the student's history of previously submitted stages.
+ *
+ * @param stdClass $processassign the instance record
+ * @param array $stages all stage records in order
+ * @param array $submissions the student's submission records
+ * @param context_module $context the module context
+ */
 function processassign_render_student_history($processassign, $stages, $submissions, $context) {
     global $OUTPUT;
 
@@ -274,7 +401,19 @@ function processassign_render_student_history($processassign, $stages, $submissi
     echo html_writer::end_div();
 }
 
-function processassign_render_student_view($processassign, $cm, $course, $context, $stages, $canSubmit, $editoroptions,
+/**
+ * Output the student view: progress summary, history and per-stage cards with submission forms.
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $cm the course module record
+ * @param stdClass $course the course record
+ * @param context_module $context the module context
+ * @param array $stages all stage records in order
+ * @param bool $cansubmit whether the user can submit
+ * @param array $editoroptions editor options for the submission forms
+ * @param int $editstageid stage id the student asked to re-edit, or 0
+ */
+function processassign_render_student_view($processassign, $cm, $course, $context, $stages, $cansubmit, $editoroptions,
         $editstageid) {
     global $OUTPUT, $PAGE, $USER;
 
@@ -402,7 +541,7 @@ function processassign_render_student_view($processassign, $cm, $course, $contex
         } else if ($aftercutoff || $afterstagedue) {
             echo $OUTPUT->notification(get_string('submissionsclosed', 'processassign'), 'warning');
             echo html_writer::div(get_string('lockreason:cutoff', 'processassign'), 'small text-muted');
-        } else if ($canSubmit && !$formrendered && $submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED
+        } else if ($cansubmit && !$formrendered && $submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED
                 && processassign_stage_requires_feedback_response($processassign, $stage)
                 && empty($submission->timefeedbackresponded)) {
             echo $OUTPUT->heading(get_string('feedbackresponserequired', 'processassign'), 5);
@@ -420,12 +559,12 @@ function processassign_render_student_view($processassign, $cm, $course, $contex
 
             $mform->display();
             $formrendered = true;
-        } else if ($canSubmit && !$formrendered && $submission && (int)$submission->status === PROCESSASSIGN_STATUS_SUBMITTED
+        } else if ($cansubmit && !$formrendered && $submission && (int)$submission->status === PROCESSASSIGN_STATUS_SUBMITTED
                 && (int)$editstageid !== (int)$stage->id) {
             $editurl = new moodle_url('/mod/processassign/view.php', ['id' => $cm->id, 'editstageid' => $stage->id]);
             echo html_writer::div(get_string('submittedforgrading', 'processassign'), 'mt-2 alert alert-success');
             echo html_writer::link($editurl, get_string('editsubmission', 'assign'), ['class' => 'btn btn-secondary mt-2']);
-        } else if ($canSubmit && !$formrendered && $showeditform && (!$submission
+        } else if ($cansubmit && !$formrendered && $showeditform && (!$submission
                 || (int)$submission->status !== PROCESSASSIGN_STATUS_GRADED)) {
             echo $OUTPUT->heading(get_string('currentstage', 'processassign'), 5);
 
@@ -477,6 +616,14 @@ function processassign_render_student_view($processassign, $cm, $course, $contex
     }
 }
 
+/**
+ * Get the advanced grading instance for a stage, if an advanced grading method is active.
+ *
+ * @param context_module $context the module context
+ * @param stdClass $stage the stage record
+ * @param stdClass $submission the submission record
+ * @return gradingform_instance|null the grading instance, or null if simple grading applies
+ */
 function processassign_get_stage_grading_instance($context, $stage, $submission) {
     global $USER;
 
@@ -497,6 +644,16 @@ function processassign_get_stage_grading_instance($context, $stage, $submission)
     return $gradinginstance;
 }
 
+/**
+ * Filter a list of graders down to those allowed to see the student under separate groups mode.
+ *
+ * @param array $graders candidate grader user records
+ * @param stdClass $cm the course module record
+ * @param stdClass $course the course record
+ * @param context_module $context the module context
+ * @param stdClass $student the student user record
+ * @return array the filtered grader user records
+ */
 function processassign_filter_graders_for_student_groups(array $graders, $cm, $course, $context, $student): array {
     global $CFG;
 
@@ -523,6 +680,18 @@ function processassign_filter_graders_for_student_groups(array $graders, $cm, $c
     });
 }
 
+/**
+ * Send a notification message via the message API.
+ *
+ * @param string $name the message provider name
+ * @param stdClass $userfrom the sending user
+ * @param stdClass $userto the receiving user
+ * @param string $subject the message subject
+ * @param string $body the plain-text message body
+ * @param moodle_url $url context url for the message
+ * @param string $urlname label for the context url
+ * @param array $customdata optional custom data attached to the message
+ */
 function processassign_send_message(string $name, $userfrom, $userto, string $subject, string $body,
         moodle_url $url, string $urlname, array $customdata = []): void {
     $message = new \core\message\message();
@@ -546,6 +715,16 @@ function processassign_send_message(string $name, $userfrom, $userto, string $su
     message_send($message);
 }
 
+/**
+ * Notify the graders that a student has submitted a stage.
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $cm the course module record
+ * @param stdClass $course the course record
+ * @param context_module $context the module context
+ * @param stdClass $stage the stage record
+ * @param stdClass $student the submitting student
+ */
 function processassign_notify_graders($processassign, $cm, $course, $context, $stage, $student) {
     $graders = get_enrolled_users($context, 'mod/processassign:grade');
     $graders = processassign_filter_graders_for_student_groups($graders, $cm, $course, $context, $student);
@@ -573,6 +752,15 @@ function processassign_notify_graders($processassign, $cm, $course, $context, $s
     }
 }
 
+/**
+ * Notify a student that their stage submission has been graded.
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $cm the course module record
+ * @param stdClass $course the course record
+ * @param stdClass $stage the stage record
+ * @param stdClass $student the student to notify
+ */
 function processassign_notify_student($processassign, $cm, $course, $stage, $student) {
     global $USER;
 
@@ -594,6 +782,16 @@ function processassign_notify_student($processassign, $cm, $course, $stage, $stu
         ]);
 }
 
+/**
+ * Handle a student's submitted form: save a stage submission or a feedback response.
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $cm the course module record
+ * @param stdClass $course the course record
+ * @param context_module $context the module context
+ * @param array $stages all stage records in order
+ * @param array $editoroptions editor options for the forms
+ */
 function processassign_handle_student_post($processassign, $cm, $course, $context, array $stages, array $editoroptions) {
     global $DB, $PAGE, $USER;
 
@@ -717,6 +915,14 @@ function processassign_handle_student_post($processassign, $cm, $course, $contex
     }
 }
 
+/**
+ * Determine the dashboard status key and label for a stage/submission pair.
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $stage the stage record
+ * @param stdClass|null $submission the submission record, or null if none
+ * @return array two-element array of status key and localised label
+ */
 function processassign_dashboard_status($processassign, $stage, $submission): array {
     if (processassign_stage_complete($processassign, $stage, $submission)) {
         return ['complete', get_string('complete')];
@@ -737,6 +943,14 @@ function processassign_dashboard_status($processassign, $stage, $submission): ar
     return ['notstarted', get_string('notstarted', 'processassign')];
 }
 
+/**
+ * Collect the data needed for the teacher dashboard: students, submissions, filters and counts.
+ *
+ * @param stdClass $processassign the instance record
+ * @param context_module $context the module context
+ * @param array $stages all stage records in order
+ * @return array dashboard data keyed by students, submissions, filters, counts, submittedusers, needsgrading
+ */
 function processassign_collect_teacher_dashboard_data($processassign, $context, $stages): array {
     global $DB;
 
@@ -797,6 +1011,14 @@ function processassign_collect_teacher_dashboard_data($processassign, $context, 
     ];
 }
 
+/**
+ * Output the grading summary table and action buttons for graders.
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $cm the course module record
+ * @param context_module $context the module context
+ * @param array $stages all stage records in order
+ */
 function processassign_render_grading_summary($processassign, $cm, $context, $stages): void {
     global $OUTPUT;
 
@@ -831,6 +1053,13 @@ function processassign_render_grading_summary($processassign, $cm, $context, $st
     echo html_writer::div(implode(' ', $buttons), 'mb-4');
 }
 
+/**
+ * Render a dropdown action menu.
+ *
+ * @param string $label accessible label for the menu toggle
+ * @param array $items menu items, each with text and url keys (or disabled => true)
+ * @return string HTML for the menu
+ */
 function processassign_render_action_menu(string $label, array $items): string {
     static $menuid = 0;
     $menuid++;
@@ -864,10 +1093,24 @@ function processassign_render_action_menu(string $label, array $items): string {
     return html_writer::div($toggle . html_writer::div(implode('', $links), 'dropdown-menu'), 'dropdown d-inline-block');
 }
 
+/**
+ * Resolve the effective due date for a stage (stage due date, falling back to the activity due date).
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $stage the stage record
+ * @return int the due date timestamp, or 0 if none
+ */
 function processassign_stage_due_date($processassign, $stage): int {
     return !empty($stage->duedate) ? (int)$stage->duedate : (int)($processassign->duedate ?? 0);
 }
 
+/**
+ * Return the time remaining (or late) text for a stage.
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $stage the stage record
+ * @return string the time remaining text, or '-' if no due date
+ */
 function processassign_time_remaining_text($processassign, $stage): string {
     $duedate = processassign_stage_due_date($processassign, $stage);
     if (empty($duedate)) {
@@ -880,6 +1123,14 @@ function processassign_time_remaining_text($processassign, $stage): string {
     return get_string('late', 'processassign');
 }
 
+/**
+ * Return the current gradebook grade for a submission as display text.
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $stage the stage record
+ * @param stdClass|null $submission the submission record, or null if none
+ * @return string the grade text
+ */
 function processassign_current_gradebook_grade_text($processassign, $stage, $submission): string {
     if (!$submission || (int)$submission->status !== PROCESSASSIGN_STATUS_GRADED) {
         return get_string('notgraded', 'processassign');
@@ -891,6 +1142,14 @@ function processassign_current_gradebook_grade_text($processassign, $stage, $sub
     return format_float($grade->rawgrade, 2) . ' / ' . format_float($processassign->grade, 2);
 }
 
+/**
+ * Whether the student can still edit an existing submission for a stage.
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $stage the stage record
+ * @param stdClass|null $submission the submission record, or null if none
+ * @return bool true if editing is allowed
+ */
 function processassign_student_can_edit_submission($processassign, $stage, $submission): bool {
     if (!$submission || (int)$submission->status === PROCESSASSIGN_STATUS_GRADED) {
         return false;
@@ -905,6 +1164,14 @@ function processassign_student_can_edit_submission($processassign, $stage, $subm
     return true;
 }
 
+/**
+ * Whether the student can submit (or resubmit) a stage.
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $stage the stage record
+ * @param stdClass|null $submission the submission record, or null if none
+ * @return bool true if submitting is allowed
+ */
 function processassign_student_can_submit_stage($processassign, $stage, $submission): bool {
     if ($submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED) {
         return false;
@@ -919,6 +1186,17 @@ function processassign_student_can_submit_stage($processassign, $stage, $submiss
     return true;
 }
 
+/**
+ * Output the teacher submissions table with search and filter controls.
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $cm the course module record
+ * @param context_module $context the module context
+ * @param array $stages all stage records in order
+ * @param string $statusfilter status filter key, or 'all'
+ * @param int $stagefilter stage id to filter by, or 0 for all
+ * @param string $search free-text search over student name and email
+ */
 function processassign_render_teacher_table($processassign, $cm, $context, $stages, $statusfilter, $stagefilter, $search) {
     global $OUTPUT, $PAGE;
 
@@ -1143,6 +1421,12 @@ function processassign_render_teacher_table($processassign, $cm, $context, $stag
     echo html_writer::end_div();
 }
 
+/**
+ * Get the ordered list of gradable submission ids (submitted first, then graded).
+ *
+ * @param stdClass $processassign the instance record
+ * @return array submission ids in grading order
+ */
 function processassign_get_grader_submission_ids($processassign): array {
     global $DB;
 
@@ -1165,6 +1449,13 @@ function processassign_get_grader_submission_ids($processassign): array {
     return array_map('intval', array_keys($records));
 }
 
+/**
+ * Validate a requested submission id against the gradable list, falling back to the first gradable one.
+ *
+ * @param stdClass $processassign the instance record
+ * @param int $submissionid the requested submission id, or 0
+ * @return int a valid submission id, or 0 if nothing is gradable
+ */
 function processassign_pick_grader_submissionid($processassign, int $submissionid): int {
     $submissionids = processassign_get_grader_submission_ids($processassign);
     if (!$submissionids) {
@@ -1177,6 +1468,14 @@ function processassign_pick_grader_submissionid($processassign, int $submissioni
     return reset($submissionids);
 }
 
+/**
+ * Render the previous/next navigation bar and user selector for the grader workflow.
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $cm the course module record
+ * @param int $submissionid the submission currently being graded
+ * @return string HTML for the navigation bar
+ */
 function processassign_render_grader_navigation($processassign, $cm, int $submissionid): string {
     global $DB;
 
@@ -1254,6 +1553,14 @@ function processassign_render_grader_navigation($processassign, $cm, int $submis
     return html_writer::div(implode(' ', $items) . $selector, 'processassign-grader-nav mb-3');
 }
 
+/**
+ * Render the submission status summary table shown to graders.
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $stage the stage record
+ * @param stdClass|null $submission the submission record, or null if none
+ * @return string HTML for the status table
+ */
 function processassign_render_grader_status_panel($processassign, $stage, $submission): string {
     $table = new html_table();
     $table->attributes['class'] = 'generaltable processassign-grader-status mb-4';
@@ -1272,6 +1579,17 @@ function processassign_render_grader_status_panel($processassign, $stage, $submi
     return html_writer::table($table);
 }
 
+/**
+ * Display and process the grading form for a single submission, then output the full grading page.
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $cm the course module record
+ * @param stdClass $course the course record
+ * @param context_module $context the module context
+ * @param int $submissionid the submission to grade
+ * @param array $editoroptions editor options for the feedback editor
+ * @param bool $graderworkflow whether the sequential grader workflow (prev/next) is active
+ */
 function processassign_handle_grade_view($processassign, $cm, $course, $context, $submissionid, $editoroptions,
         bool $graderworkflow = false) {
     global $DB, $OUTPUT, $PAGE, $USER;
@@ -1345,7 +1663,7 @@ function processassign_handle_grade_view($processassign, $cm, $course, $context,
             'id' => $cm->id,
             'action' => 'submissions',
         ]);
-        if ($graderworkflow && optional_param('saveandshownext', '', PARAM_RAW)) {
+        if ($graderworkflow && optional_param('saveandshownext', '', PARAM_ALPHA)) {
             $submissionids = processassign_get_grader_submission_ids($processassign);
             $position = array_search((int)$submission->id, $submissionids, true);
             if ($position !== false && isset($submissionids[$position + 1])) {
@@ -1381,7 +1699,7 @@ function processassign_handle_grade_view($processassign, $cm, $course, $context,
 
 $stages = processassign_get_stages($processassign->id);
 
-if ($canSubmit && !$canGrade && $action === 'view' && $stages) {
+if ($cansubmit && !$cangrade && $action === 'view' && $stages) {
     processassign_handle_student_post($processassign, $cm, $course, $context, $stages, $editoroptions);
 }
 
@@ -1409,7 +1727,7 @@ echo $OUTPUT->heading(format_string($processassign->name));
 if (!empty($processassign->alwaysshowdescription)
         || empty($processassign->allowsubmissionsfromdate)
         || time() >= $processassign->allowsubmissionsfromdate
-        || $canGrade) {
+        || $cangrade) {
     echo format_module_intro('processassign', $processassign, $cm->id);
     echo processassign_render_activity_instructions($processassign, $context);
     echo processassign_render_intro_attachments($context);
@@ -1418,14 +1736,14 @@ if (!empty($processassign->alwaysshowdescription)
 if (!$stages) {
     echo $OUTPUT->notification(get_string('nostages', 'processassign'), 'warning');
 } else {
-    if ($canGrade) {
+    if ($cangrade) {
         if ($action === 'submissions') {
             processassign_render_teacher_table($processassign, $cm, $context, $stages, $statusfilter, $stagefilter, $search);
         } else {
             processassign_render_grading_summary($processassign, $cm, $context, $stages);
         }
-    } else if ($canSubmit) {
-        processassign_render_student_view($processassign, $cm, $course, $context, $stages, $canSubmit, $editoroptions,
+    } else if ($cansubmit) {
+        processassign_render_student_view($processassign, $cm, $course, $context, $stages, $cansubmit, $editoroptions,
             $editstageid);
     }
 }

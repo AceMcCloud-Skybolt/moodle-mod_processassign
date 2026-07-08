@@ -1,5 +1,26 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * Library of interface functions and constants for the Process Assignment module.
+ *
+ * @package    mod_processassign
+ * @copyright  2026 Murdoch Business School
+ * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ */
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -7,6 +28,11 @@ define('PROCESSASSIGN_STATUS_DRAFT', 0);
 define('PROCESSASSIGN_STATUS_SUBMITTED', 1);
 define('PROCESSASSIGN_STATUS_GRADED', 2);
 
+/**
+ * Return the list of available stage type options.
+ *
+ * @return array stage type identifier => localised label
+ */
 function processassign_stage_type_options(): array {
     return [
         'custom' => get_string('stagetype:custom', 'processassign'),
@@ -21,6 +47,11 @@ function processassign_stage_type_options(): array {
     ];
 }
 
+/**
+ * Return the list of available gradebook mode options.
+ *
+ * @return array gradebook mode identifier => localised label
+ */
 function processassign_gradebook_mode_options(): array {
     return [
         'single' => get_string('gradebookmode:single', 'processassign'),
@@ -28,6 +59,12 @@ function processassign_gradebook_mode_options(): array {
     ];
 }
 
+/**
+ * Return the default instructions text for a given stage type.
+ *
+ * @param string $stagetype stage type identifier
+ * @return string default instructions, or an empty string if none defined
+ */
 function processassign_default_instructions_for_stage_type(string $stagetype): string {
     $identifier = 'stagetypeinstructions:' . $stagetype;
     if (get_string_manager()->string_exists($identifier, 'processassign')) {
@@ -37,6 +74,12 @@ function processassign_default_instructions_for_stage_type(string $stagetype): s
     return '';
 }
 
+/**
+ * Return whether the module supports a given feature.
+ *
+ * @param string $feature FEATURE_xx constant
+ * @return mixed true if supported, null if unknown, or a constant value for meta features
+ */
 function processassign_supports($feature) {
     switch ($feature) {
         case FEATURE_MOD_ARCHETYPE:
@@ -60,6 +103,12 @@ function processassign_supports($feature) {
     }
 }
 
+/**
+ * Extend the settings navigation with a link to the submissions overview for graders.
+ *
+ * @param settings_navigation $settings the settings navigation object
+ * @param navigation_node $navref the node to extend
+ */
 function processassign_extend_settings_navigation(settings_navigation $settings, navigation_node $navref): void {
     $page = $settings->get_page();
     $cm = $page->cm;
@@ -76,7 +125,6 @@ function processassign_extend_settings_navigation(settings_navigation $settings,
         'action' => 'submissions',
         'statusfilter' => 'all',
     ]);
-    $page->requires->css('/mod/processassign/styles.css');
     if ($modulepagenode = $navref->get('modulepage')) {
         $modulepagenode->text = get_string('submissions', 'processassign');
         $modulepagenode->action = $url;
@@ -90,15 +138,27 @@ function processassign_extend_settings_navigation(settings_navigation $settings,
     );
 }
 
+/**
+ * Return the list of attempt reopen method options.
+ *
+ * @return array reopen method identifier => localised label
+ */
 function processassign_attempt_reopen_options(): array {
     return [
-        'none' => get_string('attemptreopenmethod_none', 'assign'),
+        'none' => get_string('attemptreopenmethod_none', 'processassign'),
         'manual' => get_string('attemptreopenmethod_manual', 'assign'),
         'automatic' => get_string('attemptreopenmethod_automatic', 'assign'),
         'untilpass' => get_string('attemptreopenmethod_untilpass', 'assign'),
     ];
 }
 
+/**
+ * Add a new processassign instance.
+ *
+ * @param stdClass $data form data from mod_form
+ * @param mod_processassign_mod_form|null $mform the form instance
+ * @return int the id of the newly inserted record
+ */
 function processassign_add_instance($data, $mform = null) {
     global $DB;
 
@@ -115,6 +175,13 @@ function processassign_add_instance($data, $mform = null) {
     return $data->id;
 }
 
+/**
+ * Update an existing processassign instance.
+ *
+ * @param stdClass $data form data from mod_form
+ * @param mod_processassign_mod_form|null $mform the form instance
+ * @return bool true on success
+ */
 function processassign_update_instance($data, $mform = null) {
     global $DB;
 
@@ -137,6 +204,11 @@ function processassign_update_instance($data, $mform = null) {
     return true;
 }
 
+/**
+ * Normalise and apply defaults to instance settings before saving.
+ *
+ * @param stdClass $data form data, modified in place
+ */
 function processassign_normalise_settings($data) {
     $data->allowsubmissionsfromdate = (int)($data->allowsubmissionsfromdate ?? 0);
     $data->duedate = (int)($data->duedate ?? 0);
@@ -171,6 +243,11 @@ function processassign_normalise_settings($data) {
     $data->gradecategoryid = (int)($data->gradecategoryid ?? 0);
 }
 
+/**
+ * Save intro attachment and activity editor draft files to permanent storage.
+ *
+ * @param stdClass $data form data including draft item ids
+ */
 function processassign_save_intro_files($data): void {
     global $DB;
 
@@ -192,11 +269,27 @@ function processassign_save_intro_files($data): void {
     }
 }
 
+/**
+ * Delete a processassign instance and all associated data.
+ *
+ * @param int $id the instance id
+ * @return bool true on success, false if the instance does not exist
+ */
 function processassign_delete_instance($id) {
     global $DB;
 
     if (!$processassign = $DB->get_record('processassign', ['id' => $id])) {
         return false;
+    }
+
+    if ($cm = get_coursemodule_from_instance('processassign', $id)) {
+        $context = context_module::instance($cm->id);
+        $fs = get_file_storage();
+        $fs->delete_area_files($context->id, 'mod_processassign', 'submission');
+        $fs->delete_area_files($context->id, 'mod_processassign', 'feedback');
+        $fs->delete_area_files($context->id, 'mod_processassign', 'introattachment');
+        $fs->delete_area_files($context->id, 'mod_processassign', 'activity');
+        $fs->delete_area_files($context->id, 'mod_processassign', 'intro');
     }
 
     processassign_grade_item_delete($processassign);
@@ -210,6 +303,12 @@ function processassign_delete_instance($id) {
     return true;
 }
 
+/**
+ * Create, update or delete the stage records for an instance from form data.
+ *
+ * @param int $processassignid the instance id
+ * @param stdClass $data form data containing stageNname etc. fields
+ */
 function processassign_save_stages($processassignid, $data) {
     global $DB;
 
@@ -287,6 +386,12 @@ function processassign_save_stages($processassignid, $data) {
     }
 }
 
+/**
+ * Return course module info for course page display.
+ *
+ * @param stdClass $coursemodule the course module record
+ * @return cached_cm_info|null info object, or null if the instance does not exist
+ */
 function processassign_get_coursemodule_info($coursemodule) {
     global $DB;
 
@@ -303,6 +408,13 @@ function processassign_get_coursemodule_info($coursemodule) {
     return $info;
 }
 
+/**
+ * Create or update the gradebook item(s) for an instance.
+ *
+ * @param stdClass $processassign the instance record
+ * @param mixed $grades optional array of grade objects, single grade object, or 'reset'
+ * @return int GRADE_UPDATE_OK or another GRADE_UPDATE_xx constant
+ */
 function processassign_grade_item_update($processassign, $grades = null) {
     processassign_require_gradebook();
 
@@ -335,6 +447,13 @@ function processassign_grade_item_update($processassign, $grades = null) {
         $processassign->id, 0, $grades, $params);
 }
 
+/**
+ * Delete gradebook item(s) for an instance.
+ *
+ * @param stdClass $processassign the instance record
+ * @param int|null $itemnumber a specific item number to delete, or null for all
+ * @return int GRADE_UPDATE_OK or another GRADE_UPDATE_xx constant
+ */
 function processassign_grade_item_delete($processassign, $itemnumber = null) {
     processassign_require_gradebook();
 
@@ -355,6 +474,9 @@ function processassign_grade_item_delete($processassign, $itemnumber = null) {
     return $status;
 }
 
+/**
+ * Load the gradebook libraries required by the grade functions below.
+ */
 function processassign_require_gradebook(): void {
     global $CFG;
 
@@ -363,6 +485,11 @@ function processassign_require_gradebook(): void {
     require_once($CFG->libdir . '/grade/grade_item.php');
 }
 
+/**
+ * Create or update one gradebook item per stage inside the instance grade category.
+ *
+ * @param stdClass $processassign the instance record
+ */
 function processassign_update_stage_grade_items($processassign): void {
     global $DB;
 
@@ -392,6 +519,12 @@ function processassign_update_stage_grade_items($processassign): void {
     }
 }
 
+/**
+ * Fetch (or create if missing) the grade category used in category gradebook mode.
+ *
+ * @param stdClass $processassign the instance record, gradecategoryid is updated in place
+ * @return grade_category the category for this instance
+ */
 function processassign_ensure_grade_category($processassign): grade_category {
     global $DB;
 
@@ -430,6 +563,12 @@ function processassign_ensure_grade_category($processassign): grade_category {
     return $category;
 }
 
+/**
+ * Resolve the parent grade category selected on the form, validating it belongs to the course.
+ *
+ * @param stdClass $processassign the instance record including the gradecat form value
+ * @return int the parent category id, or 0 if none
+ */
 function processassign_get_parent_grade_category_id($processassign): int {
     $selected = (int)($processassign->gradecat ?? 0);
     if ($selected <= 0) {
@@ -440,6 +579,13 @@ function processassign_get_parent_grade_category_id($processassign): int {
     return $category ? (int)$category->id : 0;
 }
 
+/**
+ * Move a gradebook item for this instance into the given grade category.
+ *
+ * @param stdClass $processassign the instance record
+ * @param int $itemnumber the grade item number
+ * @param int $categoryid the target grade category id
+ */
 function processassign_move_grade_item_to_category($processassign, int $itemnumber, int $categoryid): void {
     $item = grade_item::fetch([
         'courseid' => $processassign->course,
@@ -454,12 +600,22 @@ function processassign_move_grade_item_to_category($processassign, int $itemnumb
     }
 }
 
+/**
+ * Delete the per-stage gradebook items for an instance.
+ *
+ * @param stdClass $processassign the instance record
+ */
 function processassign_delete_stage_grade_items($processassign): void {
     for ($i = 1; $i <= 5; $i++) {
         processassign_grade_item_delete($processassign, $i);
     }
 }
 
+/**
+ * Delete the grade category created for category gradebook mode.
+ *
+ * @param stdClass $processassign the instance record, gradecategoryid is reset in place
+ */
 function processassign_delete_grade_category($processassign): void {
     global $DB;
 
@@ -472,6 +628,13 @@ function processassign_delete_grade_category($processassign): void {
     $processassign->gradecategoryid = 0;
 }
 
+/**
+ * Collect the graded submissions for a stage as gradebook grade objects.
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $stage the stage record
+ * @return array userid => grade object
+ */
 function processassign_get_stage_grades($processassign, $stage): array {
     global $DB;
 
@@ -491,6 +654,13 @@ function processassign_get_stage_grades($processassign, $stage): array {
     return $grades;
 }
 
+/**
+ * Push a single submission's grade to the per-stage gradebook item (category mode only).
+ *
+ * @param stdClass $processassign the instance record
+ * @param stdClass $stage the stage record
+ * @param stdClass $submission the submission record
+ */
 function processassign_update_stage_grade($processassign, $stage, $submission): void {
     if (($processassign->gradebookmode ?? 'single') !== 'category') {
         return;
@@ -512,6 +682,13 @@ function processassign_update_stage_grade($processassign, $stage, $submission): 
     processassign_move_grade_item_to_category($processassign, (int)$stage->sortorder, $processassign->gradecategoryid);
 }
 
+/**
+ * Update grades in the gradebook for the given instance and (optionally) user.
+ *
+ * @param stdClass $processassign the instance record
+ * @param int $userid a specific user id, or 0 for all users
+ * @param bool $nullifnone insert a null grade when the user has no submissions
+ */
 function processassign_update_grades($processassign, $userid = 0, $nullifnone = true) {
     global $DB;
 
@@ -536,6 +713,14 @@ function processassign_update_grades($processassign, $userid = 0, $nullifnone = 
     processassign_grade_item_update($processassign, $grades);
 }
 
+/**
+ * Calculate a user's aggregate grade across all graded stages (single gradebook mode).
+ *
+ * @param stdClass $processassign the instance record
+ * @param int $userid the user id
+ * @param bool $nullifnone return a null raw grade when the user has no graded submissions
+ * @return stdClass grade object with userid and rawgrade properties
+ */
 function processassign_get_user_grade($processassign, $userid, bool $nullifnone = true) {
     global $DB;
 
@@ -559,6 +744,18 @@ function processassign_get_user_grade($processassign, $userid, bool $nullifnone 
     return $grade;
 }
 
+/**
+ * Serve files from the processassign file areas.
+ *
+ * @param stdClass $course the course record
+ * @param stdClass $cm the course module record
+ * @param context $context the module context
+ * @param string $filearea the file area name
+ * @param array $args remaining path arguments (itemid, path, filename)
+ * @param bool $forcedownload whether the file should be forced to download
+ * @param array $options additional options affecting file serving
+ * @return bool false if the file is not found or access is denied
+ */
 function processassign_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = []) {
     global $DB, $USER;
 
