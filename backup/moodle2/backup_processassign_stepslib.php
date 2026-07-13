@@ -48,7 +48,7 @@ class backup_processassign_activity_structure_step extends backup_activity_struc
             'feedbackcomments', 'feedbackfiles', 'feedbackmaxfiles', 'feedbackmaxbytes',
             'wordlimitenabled', 'wordlimit', 'sendnotifications', 'sendstudentnotifications', 'submissiondrafts',
             'requiresubmissionstatement', 'requirefeedbackresponse', 'maxattempts', 'attemptreopenmethod',
-            'gradebookmode', 'timemodified',
+            'gradebookmode', 'timecreated', 'timemodified',
         ]);
 
         $stages = new backup_nested_element('stages');
@@ -62,7 +62,7 @@ class backup_processassign_activity_structure_step extends backup_activity_struc
         $submissions = new backup_nested_element('submissions');
         $submission = new backup_nested_element('submission', ['id'], [
             'userid', 'submissiontext', 'submissionformat', 'grade', 'feedback', 'feedbackformat',
-            'feedbackresponse', 'feedbackresponseformat', 'status', 'gradedby', 'timecreated', 'timemodified',
+            'feedbackresponse', 'feedbackresponseformat', 'status', 'graderid', 'timecreated', 'timemodified',
             'timesubmitted', 'timegraded', 'timefeedbackresponded',
         ]);
 
@@ -78,7 +78,7 @@ class backup_processassign_activity_structure_step extends backup_activity_struc
         if ($userinfo) {
             $submission->set_source_table('processassign_subs', ['stageid' => backup::VAR_PARENTID]);
             $submission->annotate_ids('user', 'userid');
-            $submission->annotate_ids('user', 'gradedby');
+            $submission->annotate_ids('user', 'graderid');
             $submission->annotate_files('mod_processassign', 'submission', 'id');
             $submission->annotate_files('mod_processassign', 'feedback', 'id');
         }

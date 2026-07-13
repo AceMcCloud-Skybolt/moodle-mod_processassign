@@ -71,6 +71,7 @@ class restore_processassign_activity_structure_step extends restore_activity_str
         $data->activity = $data->activity ?? '';
         $data->activityformat = $data->activityformat ?? FORMAT_HTML;
         $data->requirefeedbackresponse = $data->requirefeedbackresponse ?? 0;
+        $data->timecreated = !empty($data->timecreated) ? $data->timecreated : ($data->timemodified ?? time());
 
         $newitemid = $DB->insert_record('processassign', $data);
         $this->apply_activity_instance($newitemid);
@@ -106,7 +107,12 @@ class restore_processassign_activity_structure_step extends restore_activity_str
         $data->stageid = $this->get_new_parentid('processassign_stage');
         $data->processassignid = $this->get_new_parentid('processassign');
         $data->userid = $this->get_mappingid('user', $data->userid);
-        $data->gradedby = $this->get_mappingid('user', $data->gradedby);
+        // Backups made before the gradedby -> graderid rename still carry the old name.
+        if (!isset($data->graderid) && isset($data->gradedby)) {
+            $data->graderid = $data->gradedby;
+            unset($data->gradedby);
+        }
+        $data->graderid = $this->get_mappingid('user', $data->graderid ?? 0);
 
         $newitemid = $DB->insert_record('processassign_subs', $data);
         $this->set_mapping('processassign_submission', $oldid, $newitemid, true);

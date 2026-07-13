@@ -64,7 +64,7 @@ class provider implements
                 'grade' => 'privacy:metadata:processassign_subs:grade',
                 'feedback' => 'privacy:metadata:processassign_subs:feedback',
                 'feedbackresponse' => 'privacy:metadata:processassign_subs:feedbackresponse',
-                'gradedby' => 'privacy:metadata:processassign_subs:gradedby',
+                'graderid' => 'privacy:metadata:processassign_subs:graderid',
                 'timesubmitted' => 'privacy:metadata:processassign_subs:timesubmitted',
                 'timegraded' => 'privacy:metadata:processassign_subs:timegraded',
                 'timefeedbackresponded' => 'privacy:metadata:processassign_subs:timefeedbackresponded',

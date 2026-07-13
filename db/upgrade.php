@@ -223,5 +223,25 @@ function xmldb_processassign_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026061201, 'processassign');
     }
 
+    if ($oldversion < 2026070800) {
+        // Add timecreated to the main instance table, consistent with Moodle convention.
+        $table = new xmldb_table('processassign');
+        $field = new xmldb_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0',
+            'gradecategoryid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+            $DB->execute("UPDATE {processassign} SET timecreated = timemodified WHERE timecreated = 0");
+        }
+
+        // Rename gradedby to the conventional graderid.
+        $substable = new xmldb_table('processassign_subs');
+        $gradedby = new xmldb_field('gradedby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'status');
+        if ($dbman->field_exists($substable, $gradedby)) {
+            $dbman->rename_field($substable, $gradedby, 'graderid');
+        }
+
+        upgrade_mod_savepoint(true, 2026070800, 'processassign');
+    }
+
     return true;
 }

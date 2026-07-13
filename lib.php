@@ -162,7 +162,8 @@ function processassign_attempt_reopen_options(): array {
 function processassign_add_instance($data, $mform = null) {
     global $DB;
 
-    $data->timemodified = time();
+    $data->timecreated = time();
+    $data->timemodified = $data->timecreated;
     processassign_normalise_settings($data);
     if (!isset($data->grade)) {
         $data->grade = 100;

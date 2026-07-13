@@ -97,7 +97,7 @@ class mod_processassign_generator extends testing_module_generator {
         $record->feedbackresponse = $record->feedbackresponse ?? '';
         $record->feedbackresponseformat = $record->feedbackresponseformat ?? FORMAT_HTML;
         $record->status = $record->status ?? PROCESSASSIGN_STATUS_SUBMITTED;
-        $record->gradedby = $record->gradedby ?? 0;
+        $record->graderid = $record->graderid ?? 0;
         $record->timecreated = $record->timecreated ?? $now;
         $record->timemodified = $record->timemodified ?? $now;
         $record->timesubmitted = $record->timesubmitted ?? $now;
