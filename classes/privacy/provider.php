@@ -19,7 +19,7 @@
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace mod_processassign\privacy;
@@ -33,20 +33,17 @@ use core_privacy\local\request\transform;
 use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Privacy provider for the Process Assignment module.
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class provider implements
-        \core_privacy\local\metadata\provider,
-        \core_privacy\local\request\plugin\provider,
-        \core_privacy\local\request\core_userlist_provider {
-
+    \core_privacy\local\metadata\provider,
+    \core_privacy\local\request\core_userlist_provider,
+    \core_privacy\local\request\plugin\provider {
     /**
      * Describe the personal data stored by the plugin.
      *
@@ -176,10 +173,18 @@ class provider implements
                     'timefeedbackresponded' => transform::datetime($submission->timefeedbackresponded),
                 ];
                 writer::with_context($context)->export_data($subcontext, $data);
-                writer::with_context($context)->export_area_files($subcontext, 'mod_processassign', 'submission',
-                    $submission->id);
-                writer::with_context($context)->export_area_files($subcontext, 'mod_processassign', 'feedback',
-                    $submission->id);
+                writer::with_context($context)->export_area_files(
+                    $subcontext,
+                    'mod_processassign',
+                    'submission',
+                    $submission->id
+                );
+                writer::with_context($context)->export_area_files(
+                    $subcontext,
+                    'mod_processassign',
+                    'feedback',
+                    $submission->id
+                );
             }
         }
     }
@@ -229,8 +234,12 @@ class provider implements
                 continue;
             }
 
-            $submissions = $DB->get_records('processassign_subs',
-                ['processassignid' => $cm->instance, 'userid' => $userid], '', 'id');
+            $submissions = $DB->get_records(
+                'processassign_subs',
+                ['processassignid' => $cm->instance, 'userid' => $userid],
+                '',
+                'id'
+            );
             self::delete_submission_files($context, array_keys($submissions));
             $DB->delete_records('processassign_subs', ['processassignid' => $cm->instance, 'userid' => $userid]);
         }
@@ -259,13 +268,21 @@ class provider implements
             return;
         }
 
-        list($usersql, $userparams) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+        [$usersql, $userparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
         $params = ['processassignid' => $cm->instance] + $userparams;
-        $submissions = $DB->get_records_select('processassign_subs',
-            "processassignid = :processassignid AND userid {$usersql}", $params, '', 'id');
+        $submissions = $DB->get_records_select(
+            'processassign_subs',
+            "processassignid = :processassignid AND userid {$usersql}",
+            $params,
+            '',
+            'id'
+        );
         self::delete_submission_files($context, array_keys($submissions));
-        $DB->delete_records_select('processassign_subs',
-            "processassignid = :processassignid AND userid {$usersql}", $params);
+        $DB->delete_records_select(
+            'processassign_subs',
+            "processassignid = :processassignid AND userid {$usersql}",
+            $params
+        );
     }
 
     /**

@@ -19,7 +19,7 @@
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace mod_processassign;
@@ -29,18 +29,35 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/mod/processassign/lib.php');
 
+/**
+ * Unit tests for Process Assignment library functions.
+ */
 final class lib_test extends \advanced_testcase {
-
+    /**
+     * Create a Process Assignment instance for a test.
+     *
+     * @param array $record instance overrides
+     * @return \stdClass the created instance
+     */
     protected function create_processassign(array $record = []): \stdClass {
         $course = $this->getDataGenerator()->create_course();
         $generator = $this->getDataGenerator()->get_plugin_generator('mod_processassign');
         return $generator->create_instance(['course' => $course->id] + $record);
     }
 
+    /**
+     * Get ordered stages for an instance.
+     *
+     * @param \stdClass $processassign activity instance
+     * @return array ordered stage records
+     */
     protected function get_stages(\stdClass $processassign): array {
         global $DB;
-        return array_values($DB->get_records('processassign_stages',
-            ['processassignid' => $processassign->id], 'sortorder ASC'));
+        return array_values($DB->get_records(
+            'processassign_stages',
+            ['processassignid' => $processassign->id],
+            'sortorder ASC'
+        ));
     }
 
     public function test_generator_creates_default_stages(): void {

@@ -19,7 +19,7 @@
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
@@ -27,8 +27,17 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/mod/processassign/lib.php');
 
+/**
+ * Test data generator for the Process Assignment module.
+ */
 class mod_processassign_generator extends testing_module_generator {
-
+    /**
+     * Create a Process Assignment instance.
+     *
+     * @param object|array|null $record instance data
+     * @param array|null $options generator options
+     * @return stdClass the created course-module record
+     */
     public function create_instance($record = null, ?array $options = null) {
         $record = (object)(array)$record;
 
@@ -85,6 +94,12 @@ class mod_processassign_generator extends testing_module_generator {
         return parent::create_instance($record, (array)$options);
     }
 
+    /**
+     * Create a stage submission record.
+     *
+     * @param array $record submission values
+     * @return stdClass the created submission record
+     */
     public function create_stage_submission(array $record): stdClass {
         global $DB;
 

@@ -19,12 +19,12 @@
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 use mod_processassign\local\stage_manager;
 use mod_processassign\local\view_controller;
-use mod_processassign\local\view_renderer;
+use mod_processassign\local\view_builder;
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/mod/processassign/lib.php');
@@ -92,13 +92,15 @@ if ($action === 'grader') {
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(format_string($processassign->name));
-if (!empty($processassign->alwaysshowdescription)
+if (
+    !empty($processassign->alwaysshowdescription)
         || empty($processassign->allowsubmissionsfromdate)
         || time() >= $processassign->allowsubmissionsfromdate
-        || $cangrade) {
+        || $cangrade
+) {
     echo format_module_intro('processassign', $processassign, $cm->id);
-    echo view_renderer::render_activity_instructions($processassign, $context);
-    echo view_renderer::render_intro_attachments($context);
+    echo view_builder::render_activity_instructions($processassign, $context);
+    echo view_builder::render_intro_attachments($context);
 }
 
 if (!$stages) {
@@ -106,14 +108,29 @@ if (!$stages) {
 } else {
     if ($cangrade) {
         if ($action === 'submissions') {
-            view_renderer::render_teacher_table($processassign, $cm, $context, $stages, $statusfilter, $stagefilter,
-                $search);
+            view_builder::render_teacher_table(
+                $processassign,
+                $cm,
+                $context,
+                $stages,
+                $statusfilter,
+                $stagefilter,
+                $search
+            );
         } else {
-            view_renderer::render_grading_summary($processassign, $cm, $context, $stages);
+            view_builder::render_grading_summary($processassign, $cm, $context, $stages);
         }
     } else if ($cansubmit) {
-        view_renderer::render_student_view($processassign, $cm, $course, $context, $stages, $cansubmit, $editoroptions,
-            $editstageid);
+        view_builder::render_student_view(
+            $processassign,
+            $cm,
+            $course,
+            $context,
+            $stages,
+            $cansubmit,
+            $editoroptions,
+            $editstageid
+        );
     }
 }
 

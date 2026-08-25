@@ -19,7 +19,7 @@
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
@@ -31,10 +31,9 @@ require_once($CFG->dirroot . '/mod/processassign/backup/moodle2/backup_processas
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup_processassign_activity_task extends backup_activity_task {
-
     /**
      * No specific settings for this activity.
      */

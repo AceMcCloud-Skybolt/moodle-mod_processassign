@@ -19,10 +19,8 @@
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Upgrade the processassign database schema.
@@ -41,14 +39,32 @@ function xmldb_processassign_upgrade($oldversion) {
             new xmldb_field('allowsubmissionsfromdate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'grade'),
             new xmldb_field('cutoffdate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'allowsubmissionsfromdate'),
             new xmldb_field('alwaysshowdescription', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '1', 'cutoffdate'),
-            new xmldb_field('submissiononlinetext', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '1', 'alwaysshowdescription'),
+            new xmldb_field(
+                'submissiononlinetext',
+                XMLDB_TYPE_INTEGER,
+                '2',
+                null,
+                XMLDB_NOTNULL,
+                null,
+                '1',
+                'alwaysshowdescription'
+            ),
             new xmldb_field('submissionfile', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '1', 'submissiononlinetext'),
             new xmldb_field('maxfiles', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '5', 'submissionfile'),
             new xmldb_field('maxbytes', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'maxfiles'),
             new xmldb_field('wordlimitenabled', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0', 'maxbytes'),
             new xmldb_field('wordlimit', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'wordlimitenabled'),
             new xmldb_field('sendnotifications', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0', 'wordlimit'),
-            new xmldb_field('sendstudentnotifications', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '1', 'sendnotifications'),
+            new xmldb_field(
+                'sendstudentnotifications',
+                XMLDB_TYPE_INTEGER,
+                '2',
+                null,
+                XMLDB_NOTNULL,
+                null,
+                '1',
+                'sendnotifications'
+            ),
         ];
 
         foreach ($fields as $field) {
@@ -75,10 +91,26 @@ function xmldb_processassign_upgrade($oldversion) {
         $submissiontable = new xmldb_table('processassign_subs');
         $submissionfields = [
             new xmldb_field('feedbackresponse', XMLDB_TYPE_TEXT, null, null, null, null, null, 'feedbackformat'),
-            new xmldb_field('feedbackresponseformat', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '0',
-                'feedbackresponse'),
-            new xmldb_field('timefeedbackresponded', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0',
-                'timegraded'),
+            new xmldb_field(
+                'feedbackresponseformat',
+                XMLDB_TYPE_INTEGER,
+                '4',
+                null,
+                XMLDB_NOTNULL,
+                null,
+                '0',
+                'feedbackresponse'
+            ),
+            new xmldb_field(
+                'timefeedbackresponded',
+                XMLDB_TYPE_INTEGER,
+                '10',
+                null,
+                XMLDB_NOTNULL,
+                null,
+                '0',
+                'timegraded'
+            ),
         ];
         foreach ($submissionfields as $field) {
             if (!$dbman->field_exists($submissiontable, $field)) {
@@ -92,8 +124,16 @@ function xmldb_processassign_upgrade($oldversion) {
     if ($oldversion < 2026052201) {
         $stagestable = new xmldb_table('processassign_stages');
         $stagefields = [
-            new xmldb_field('releasegrade', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '1',
-                'requirefeedbackresponse'),
+            new xmldb_field(
+                'releasegrade',
+                XMLDB_TYPE_INTEGER,
+                '2',
+                null,
+                XMLDB_NOTNULL,
+                null,
+                '1',
+                'requirefeedbackresponse'
+            ),
             new xmldb_field('releasefeedback', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '1', 'releasegrade'),
         ];
         foreach ($stagefields as $field) {
@@ -108,10 +148,26 @@ function xmldb_processassign_upgrade($oldversion) {
     if ($oldversion < 2026052202) {
         $table = new xmldb_table('processassign');
         $fields = [
-            new xmldb_field('gradebookmode', XMLDB_TYPE_CHAR, '16', null, XMLDB_NOTNULL, null, 'single',
-                'sendstudentnotifications'),
-            new xmldb_field('gradecategoryid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0',
-                'gradebookmode'),
+            new xmldb_field(
+                'gradebookmode',
+                XMLDB_TYPE_CHAR,
+                '16',
+                null,
+                XMLDB_NOTNULL,
+                null,
+                'single',
+                'sendstudentnotifications'
+            ),
+            new xmldb_field(
+                'gradecategoryid',
+                XMLDB_TYPE_INTEGER,
+                '10',
+                null,
+                XMLDB_NOTNULL,
+                null,
+                '0',
+                'gradebookmode'
+            ),
         ];
         foreach ($fields as $field) {
             if (!$dbman->field_exists($table, $field)) {
@@ -125,18 +181,66 @@ function xmldb_processassign_upgrade($oldversion) {
     if ($oldversion < 2026052203) {
         $table = new xmldb_table('processassign');
         $fields = [
-            new xmldb_field('duedate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0',
-                'allowsubmissionsfromdate'),
-            new xmldb_field('gradingduedate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0',
-                'cutoffdate'),
-            new xmldb_field('submissiondrafts', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0',
-                'sendstudentnotifications'),
-            new xmldb_field('requiresubmissionstatement', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0',
-                'submissiondrafts'),
-            new xmldb_field('maxattempts', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, '1',
-                'requiresubmissionstatement'),
-            new xmldb_field('attemptreopenmethod', XMLDB_TYPE_CHAR, '16', null, XMLDB_NOTNULL, null, 'manual',
-                'maxattempts'),
+            new xmldb_field(
+                'duedate',
+                XMLDB_TYPE_INTEGER,
+                '10',
+                null,
+                XMLDB_NOTNULL,
+                null,
+                '0',
+                'allowsubmissionsfromdate'
+            ),
+            new xmldb_field(
+                'gradingduedate',
+                XMLDB_TYPE_INTEGER,
+                '10',
+                null,
+                XMLDB_NOTNULL,
+                null,
+                '0',
+                'cutoffdate'
+            ),
+            new xmldb_field(
+                'submissiondrafts',
+                XMLDB_TYPE_INTEGER,
+                '2',
+                null,
+                XMLDB_NOTNULL,
+                null,
+                '0',
+                'sendstudentnotifications'
+            ),
+            new xmldb_field(
+                'requiresubmissionstatement',
+                XMLDB_TYPE_INTEGER,
+                '2',
+                null,
+                XMLDB_NOTNULL,
+                null,
+                '0',
+                'submissiondrafts'
+            ),
+            new xmldb_field(
+                'maxattempts',
+                XMLDB_TYPE_INTEGER,
+                '6',
+                null,
+                XMLDB_NOTNULL,
+                null,
+                '1',
+                'requiresubmissionstatement'
+            ),
+            new xmldb_field(
+                'attemptreopenmethod',
+                XMLDB_TYPE_CHAR,
+                '16',
+                null,
+                XMLDB_NOTNULL,
+                null,
+                'manual',
+                'maxattempts'
+            ),
         ];
         foreach ($fields as $field) {
             if (!$dbman->field_exists($table, $field)) {
@@ -147,10 +251,26 @@ function xmldb_processassign_upgrade($oldversion) {
         $stagestable = new xmldb_table('processassign_stages');
         $stagefields = [
             new xmldb_field('timelimit', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'duedate'),
-            new xmldb_field('wordlimitenabled', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0',
-                'timelimit'),
-            new xmldb_field('wordlimit', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0',
-                'wordlimitenabled'),
+            new xmldb_field(
+                'wordlimitenabled',
+                XMLDB_TYPE_INTEGER,
+                '2',
+                null,
+                XMLDB_NOTNULL,
+                null,
+                '0',
+                'timelimit'
+            ),
+            new xmldb_field(
+                'wordlimit',
+                XMLDB_TYPE_INTEGER,
+                '10',
+                null,
+                XMLDB_NOTNULL,
+                null,
+                '0',
+                'wordlimitenabled'
+            ),
         ];
         foreach ($stagefields as $field) {
             if (!$dbman->field_exists($stagestable, $field)) {
@@ -211,8 +331,16 @@ function xmldb_processassign_upgrade($oldversion) {
             new xmldb_field('activity', XMLDB_TYPE_TEXT, null, null, null, null, null, 'introformat'),
             new xmldb_field('activityformat', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '1', 'activity'),
             new xmldb_field('timelimit', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'gradingduedate'),
-            new xmldb_field('requirefeedbackresponse', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0',
-                'requiresubmissionstatement'),
+            new xmldb_field(
+                'requirefeedbackresponse',
+                XMLDB_TYPE_INTEGER,
+                '2',
+                null,
+                XMLDB_NOTNULL,
+                null,
+                '0',
+                'requiresubmissionstatement'
+            ),
         ];
         foreach ($fields as $field) {
             if (!$dbman->field_exists($table, $field)) {
@@ -226,8 +354,16 @@ function xmldb_processassign_upgrade($oldversion) {
     if ($oldversion < 2026070800) {
         // Add timecreated to the main instance table, consistent with Moodle convention.
         $table = new xmldb_table('processassign');
-        $field = new xmldb_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0',
-            'gradecategoryid');
+        $field = new xmldb_field(
+            'timecreated',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'gradecategoryid'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
             $DB->execute("UPDATE {processassign} SET timecreated = timemodified WHERE timecreated = 0");
@@ -241,6 +377,32 @@ function xmldb_processassign_upgrade($oldversion) {
         }
 
         upgrade_mod_savepoint(true, 2026070800, 'processassign');
+    }
+
+    if ($oldversion < 2026082500) {
+        $table = new xmldb_table('processassign');
+        $timecreated = new xmldb_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'gradecategoryid');
+        if (!$dbman->field_exists($table, $timecreated)) {
+            $dbman->add_field($table, $timecreated);
+        }
+        $DB->execute("UPDATE {processassign} SET timecreated = timemodified WHERE timecreated = 0");
+        $substable = new xmldb_table('processassign_subs');
+        $gradedby = new xmldb_field('gradedby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'status');
+        $graderid = new xmldb_field('graderid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'status');
+        $hasgradedby = $dbman->field_exists($substable, $gradedby);
+        $hasgraderid = $dbman->field_exists($substable, $graderid);
+        if ($hasgradedby && !$hasgraderid) {
+            $dbman->rename_field($substable, $gradedby, 'graderid');
+        } else if ($hasgradedby && $hasgraderid) {
+            $DB->execute("UPDATE {processassign_subs}
+                            SET graderid = gradedby
+                          WHERE graderid = 0 AND gradedby <> 0");
+            $dbman->drop_field($substable, $gradedby);
+        } else if (!$hasgraderid) {
+            $dbman->add_field($substable, $graderid);
+        }
+
+        upgrade_mod_savepoint(true, 2026082500, 'processassign');
     }
 
     return true;

@@ -19,7 +19,7 @@
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
@@ -31,10 +31,9 @@ require_once($CFG->dirroot . '/mod/processassign/backup/moodle2/restore_processa
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class restore_processassign_activity_task extends restore_activity_task {
-
     /**
      * No specific settings for this activity.
      */
@@ -57,8 +56,11 @@ class restore_processassign_activity_task extends restore_activity_task {
         return [
             new restore_decode_content('processassign', ['intro'], 'processassign'),
             new restore_decode_content('processassign_stages', ['instructions'], 'processassign_stage'),
-            new restore_decode_content('processassign_subs', ['submissiontext', 'feedback', 'feedbackresponse'],
-                'processassign_submission'),
+            new restore_decode_content(
+                'processassign_subs',
+                ['submissiontext', 'feedback', 'feedbackresponse'],
+                'processassign_submission'
+            ),
         ];
     }
 

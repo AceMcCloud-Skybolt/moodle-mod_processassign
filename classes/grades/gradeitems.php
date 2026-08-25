@@ -19,7 +19,7 @@
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 declare(strict_types=1);
@@ -36,10 +36,9 @@ use core_grades\local\gradeitem\itemnumber_mapping;
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class gradeitems implements itemnumber_mapping, advancedgrading_mapping {
-
+class gradeitems implements advancedgrading_mapping, itemnumber_mapping {
     /**
      * Map grade item numbers to item names.
      *

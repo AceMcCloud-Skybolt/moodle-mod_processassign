@@ -69,5 +69,17 @@ jobs:
       - name: PHP lint
         run: moodle-plugin-ci phplint
 
+      - name: Moodle coding style
+        run: moodle-plugin-ci codechecker
+
+      - name: PHPDoc
+        run: moodle-plugin-ci phpdoc
+
+      - name: Validate plugin structure
+        run: moodle-plugin-ci validate
+
+      - name: Check upgrade savepoints
+        run: moodle-plugin-ci savepoints
+
       - name: PHPUnit
         run: moodle-plugin-ci phpunit

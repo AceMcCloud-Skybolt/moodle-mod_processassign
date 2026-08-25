@@ -19,10 +19,8 @@
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
 
 define('PROCESSASSIGN_STATUS_DRAFT', 0);
 define('PROCESSASSIGN_STATUS_SUBMITTED', 1);
@@ -236,8 +234,11 @@ function processassign_normalise_settings($data) {
     $data->requiresubmissionstatement = !empty($data->requiresubmissionstatement) ? 1 : 0;
     $data->requirefeedbackresponse = !empty($data->requirefeedbackresponse) ? 1 : 0;
     $data->maxattempts = (int)($data->maxattempts ?? 1);
-    $data->attemptreopenmethod = in_array($data->attemptreopenmethod ?? 'manual',
-        ['none', 'manual', 'untilpass', 'automatic'], true) ? $data->attemptreopenmethod : 'manual';
+    $data->attemptreopenmethod = in_array(
+        $data->attemptreopenmethod ?? 'manual',
+        ['none', 'manual', 'untilpass', 'automatic'],
+        true
+    ) ? $data->attemptreopenmethod : 'manual';
     $data->gradebookmode = in_array($data->gradebookmode ?? 'single', ['single', 'category'], true)
         ? $data->gradebookmode
         : 'single';
@@ -258,13 +259,26 @@ function processassign_save_intro_files($data): void {
 
     $context = context_module::instance($data->coursemodule);
     if (isset($data->introattachments)) {
-        file_save_draft_area_files($data->introattachments, $context->id, 'mod_processassign',
-            'introattachment', 0, ['subdirs' => 0]);
+        file_save_draft_area_files(
+            $data->introattachments,
+            $context->id,
+            'mod_processassign',
+            'introattachment',
+            0,
+            ['subdirs' => 0]
+        );
     }
 
     if (!empty($data->activityeditor) && is_array($data->activityeditor)) {
-        $data->activity = file_save_draft_area_files($data->activityeditor['itemid'], $context->id,
-            'mod_processassign', 'activity', 0, ['subdirs' => true], $data->activity ?? '');
+        $data->activity = file_save_draft_area_files(
+            $data->activityeditor['itemid'],
+            $context->id,
+            'mod_processassign',
+            'activity',
+            0,
+            ['subdirs' => true],
+            $data->activity ?? ''
+        );
         $DB->set_field('processassign', 'activity', $data->activity, ['id' => $data->id]);
         $DB->set_field('processassign', 'activityformat', $data->activityformat, ['id' => $data->id]);
     }
@@ -396,8 +410,13 @@ function processassign_save_stages($processassignid, $data) {
 function processassign_get_coursemodule_info($coursemodule) {
     global $DB;
 
-    if (!$processassign = $DB->get_record('processassign', ['id' => $coursemodule->instance],
-            'id, name, intro, introformat')) {
+    if (
+        !$processassign = $DB->get_record(
+            'processassign',
+            ['id' => $coursemodule->instance],
+            'id, name, intro, introformat'
+        )
+    ) {
         return null;
     }
 
@@ -444,8 +463,16 @@ function processassign_grade_item_update($processassign, $grades = null) {
         'grademin' => 0,
     ];
 
-    return grade_update('mod/processassign', $processassign->course, 'mod', 'processassign',
-        $processassign->id, 0, $grades, $params);
+    return grade_update(
+        'mod/processassign',
+        $processassign->course,
+        'mod',
+        'processassign',
+        $processassign->id,
+        0,
+        $grades,
+        $params
+    );
 }
 
 /**
@@ -459,14 +486,30 @@ function processassign_grade_item_delete($processassign, $itemnumber = null) {
     processassign_require_gradebook();
 
     if ($itemnumber !== null) {
-        return grade_update('mod/processassign', $processassign->course, 'mod', 'processassign',
-            $processassign->id, $itemnumber, null, ['deleted' => 1]);
+        return grade_update(
+            'mod/processassign',
+            $processassign->course,
+            'mod',
+            'processassign',
+            $processassign->id,
+            $itemnumber,
+            null,
+            ['deleted' => 1]
+        );
     }
 
     $status = GRADE_UPDATE_OK;
     for ($i = 0; $i <= 5; $i++) {
-        $result = grade_update('mod/processassign', $processassign->course, 'mod', 'processassign',
-            $processassign->id, $i, null, ['deleted' => 1]);
+        $result = grade_update(
+            'mod/processassign',
+            $processassign->course,
+            'mod',
+            'processassign',
+            $processassign->id,
+            $i,
+            null,
+            ['deleted' => 1]
+        );
         if ($result !== GRADE_UPDATE_OK) {
             $status = $result;
         }
@@ -503,13 +546,21 @@ function processassign_update_stage_grade_items($processassign): void {
         $itemnumber = (int)$stage->sortorder;
         $activeitemnumbers[] = $itemnumber;
         $grades = processassign_get_stage_grades($processassign, $stage);
-        grade_update('mod/processassign', $processassign->course, 'mod', 'processassign', $processassign->id,
-            $itemnumber, $grades, [
+        grade_update(
+            'mod/processassign',
+            $processassign->course,
+            'mod',
+            'processassign',
+            $processassign->id,
+            $itemnumber,
+            $grades,
+            [
                 'itemname' => $stage->name,
                 'gradetype' => GRADE_TYPE_VALUE,
                 'grademax' => max(1, (float)$stage->maxgrade),
                 'grademin' => 0,
-            ]);
+            ]
+        );
         processassign_move_grade_item_to_category($processassign, $itemnumber, $category->id);
     }
 
@@ -673,13 +724,21 @@ function processassign_update_stage_grade($processassign, $stage, $submission): 
     $grade = new stdClass();
     $grade->userid = $submission->userid;
     $grade->rawgrade = $submission->grade;
-    grade_update('mod/processassign', $processassign->course, 'mod', 'processassign', $processassign->id,
-        (int)$stage->sortorder, $grade, [
+    grade_update(
+        'mod/processassign',
+        $processassign->course,
+        'mod',
+        'processassign',
+        $processassign->id,
+        (int)$stage->sortorder,
+        $grade,
+        [
             'itemname' => $stage->name,
             'gradetype' => GRADE_TYPE_VALUE,
             'grademax' => max(1, (float)$stage->maxgrade),
             'grademin' => 0,
-        ]);
+        ]
+    );
     processassign_move_grade_item_to_category($processassign, (int)$stage->sortorder, $processassign->gradecategoryid);
 }
 
@@ -704,8 +763,12 @@ function processassign_update_grades($processassign, $userid = 0, $nullifnone = 
         return;
     }
 
-    $userids = $DB->get_fieldset_select('processassign_subs', 'DISTINCT userid',
-        'processassignid = :processassignid', ['processassignid' => $processassign->id]);
+    $userids = $DB->get_fieldset_select(
+        'processassign_subs',
+        'DISTINCT userid',
+        'processassignid = :processassignid',
+        ['processassignid' => $processassign->id]
+    );
     $grades = [];
     foreach ($userids as $gradeuserid) {
         $grade = processassign_get_user_grade($processassign, $gradeuserid, $nullifnone);
@@ -732,8 +795,10 @@ function processassign_get_user_grade($processassign, $userid, bool $nullifnone 
     }
 
     $earned = 0;
-    $submissions = $DB->get_records('processassign_subs',
-        ['processassignid' => $processassign->id, 'userid' => $userid, 'status' => PROCESSASSIGN_STATUS_GRADED]);
+    $submissions = $DB->get_records(
+        'processassign_subs',
+        ['processassignid' => $processassign->id, 'userid' => $userid, 'status' => PROCESSASSIGN_STATUS_GRADED]
+    );
     foreach ($submissions as $submission) {
         $earned += (float)$submission->grade;
     }
@@ -760,8 +825,10 @@ function processassign_get_user_grade($processassign, $userid, bool $nullifnone 
 function processassign_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = []) {
     global $DB, $USER;
 
-    if ($context->contextlevel != CONTEXT_MODULE
-            || !in_array($filearea, ['introattachment', 'activity', 'submission', 'feedback'], true)) {
+    if (
+        $context->contextlevel != CONTEXT_MODULE
+            || !in_array($filearea, ['introattachment', 'activity', 'submission', 'feedback'], true)
+    ) {
         return false;
     }
 
@@ -785,10 +852,12 @@ function processassign_pluginfile($course, $cm, $context, $filearea, $args, $for
     if ((int)$submission->processassignid !== (int)$cm->instance) {
         return false;
     }
-    if (!$stage = $DB->get_record('processassign_stages', [
+    if (
+        !$stage = $DB->get_record('processassign_stages', [
             'id' => $submission->stageid,
             'processassignid' => $cm->instance,
-        ])) {
+        ])
+    ) {
         return false;
     }
 

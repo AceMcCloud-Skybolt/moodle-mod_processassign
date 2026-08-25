@@ -19,7 +19,7 @@
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace mod_processassign\form;
@@ -33,10 +33,9 @@ require_once($CFG->libdir . '/formslib.php');
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class grade_form extends \moodleform {
-
     /**
      * Define the form elements: grade (simple or advanced), feedback and notification options.
      */
@@ -53,8 +52,12 @@ class grade_form extends \moodleform {
 
         $mform->addElement('static', 'maxgradedisplay', get_string('maxgrade', 'processassign'), $stage->maxgrade);
         if ($gradinginstance) {
-            $mform->addElement('grading', 'advancedgrading', get_string('grade', 'processassign'),
-                ['gradinginstance' => $gradinginstance]);
+            $mform->addElement(
+                'grading',
+                'advancedgrading',
+                get_string('grade', 'processassign'),
+                ['gradinginstance' => $gradinginstance]
+            );
             $mform->addElement('hidden', 'advancedgradinginstanceid', $gradinginstance->get_id());
             $mform->setType('advancedgradinginstanceid', PARAM_INT);
         } else {
@@ -68,8 +71,13 @@ class grade_form extends \moodleform {
             $mform->setType('feedback', PARAM_RAW);
         }
         if (!empty($processassign->feedbackfiles)) {
-            $mform->addElement('filemanager', 'feedbackfiles', get_string('feedbackfiles', 'processassign'),
-                null, $options['feedbackfilemanager']);
+            $mform->addElement(
+                'filemanager',
+                'feedbackfiles',
+                get_string('feedbackfiles', 'processassign'),
+                null,
+                $options['feedbackfilemanager']
+            );
         }
 
         $mform->addElement('advcheckbox', 'notifystudent', get_string('notifystudent', 'processassign'));

@@ -19,7 +19,7 @@
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace mod_processassign\form;
@@ -33,10 +33,9 @@ require_once($CFG->libdir . '/formslib.php');
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class feedback_response_form extends \moodleform {
-
     /**
      * Define the form elements.
      */
@@ -47,8 +46,13 @@ class feedback_response_form extends \moodleform {
         $mform->addElement('hidden', 'submissionid');
         $mform->setType('submissionid', PARAM_INT);
 
-        $mform->addElement('editor', 'feedbackresponseeditor', get_string('feedbackresponse', 'processassign'), null,
-            $options['editor']);
+        $mform->addElement(
+            'editor',
+            'feedbackresponseeditor',
+            get_string('feedbackresponse', 'processassign'),
+            null,
+            $options['editor']
+        );
         $mform->setType('feedbackresponseeditor', PARAM_RAW);
         $mform->addRule('feedbackresponseeditor', get_string('required'), 'required', null, 'client');
 

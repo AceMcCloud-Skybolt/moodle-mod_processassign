@@ -19,7 +19,7 @@
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 $string['modulename'] = 'Process assignment';
@@ -122,7 +122,6 @@ $string['scalegradingnotsupported'] = 'Process assignment currently supports poi
 $string['searchusers'] = 'Search users';
 $string['studentcanedit'] = 'Student can edit this stage submission';
 $string['stage'] = 'Stage';
-$string['stagecount_help'] = 'Configure up to five ordered stages for this prototype.';
 $string['stagefieldset'] = 'Stage {$a}';
 $string['stagename'] = 'Stage name';
 $string['stages'] = 'Stages';

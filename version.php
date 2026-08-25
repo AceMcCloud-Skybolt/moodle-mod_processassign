@@ -19,15 +19,15 @@
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_processassign';
-$plugin->version = 2026070800;
+$plugin->version = 2026082500;
 $plugin->requires = 2024100700;
 $plugin->maturity = MATURITY_ALPHA;
-$plugin->release = '0.1.8';
+$plugin->release = '0.1.9';
 $plugin->dependencies = ['mod_assign' => 2024100700];
 $plugin->supported = [405, 501];

@@ -19,7 +19,7 @@
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace mod_processassign\local;
@@ -36,10 +36,9 @@ require_once($CFG->dirroot . '/mod/processassign/lib.php');
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class view_controller {
-
     /**
      * Handle a student's submitted form: save a stage submission or a feedback response.
      *
@@ -50,8 +49,14 @@ class view_controller {
      * @param array $stages all stage records in order
      * @param array $editoroptions editor options for the forms
      */
-    public static function handle_student_post($processassign, $cm, $course, $context, array $stages,
-            array $editoroptions) {
+    public static function handle_student_post(
+        $processassign,
+        $cm,
+        $course,
+        $context,
+        array $stages,
+        array $editoroptions
+    ) {
         global $DB, $PAGE, $USER;
 
         if (!data_submitted() || !confirm_sesskey()) {
@@ -65,12 +70,18 @@ class view_controller {
         if ($stageid) {
             $stage = stage_manager::get_stage_by_id($stages, $stageid);
             $submission = stage_manager::get_submission_for_stage($submissions, $stageid);
-            if (!$stage || !stage_manager::student_stage_is_unlocked($processassign, $stages, $submissions, $stageid)
+            if (
+                !$stage || !stage_manager::student_stage_is_unlocked($processassign, $stages, $submissions, $stageid)
                     || !stage_manager::student_can_submit_stage($processassign, $stage, $submission)
                     || (!empty($processassign->allowsubmissionsfromdate)
-                        && time() < (int)$processassign->allowsubmissionsfromdate)) {
-                redirect($PAGE->url, get_string('stagenotavailable', 'processassign'), null,
-                    \core\output\notification::NOTIFY_ERROR);
+                        && time() < (int)$processassign->allowsubmissionsfromdate)
+            ) {
+                redirect(
+                    $PAGE->url,
+                    get_string('stagenotavailable', 'processassign'),
+                    null,
+                    \core\output\notification::NOTIFY_ERROR
+                );
             }
 
             $draftitemid = file_get_submitted_draft_itemid('submissionfiles');
@@ -81,8 +92,14 @@ class view_controller {
                 'maxfiles' => !empty($stage->maxfiles) ? $stage->maxfiles : 5,
                 'accepted_types' => !empty($stage->acceptedfiletypes) ? $stage->acceptedfiletypes : '*',
             ];
-            file_prepare_draft_area($draftitemid, $context->id, 'mod_processassign', 'submission', $itemid,
-                $filemanageroptions);
+            file_prepare_draft_area(
+                $draftitemid,
+                $context->id,
+                'mod_processassign',
+                'submission',
+                $itemid,
+                $filemanageroptions
+            );
 
             $mform = new \mod_processassign\form\submission_form($PAGE->url, [
                 'stage' => $stage,
@@ -93,8 +110,12 @@ class view_controller {
                 return;
             }
             if ((int)$data->stageid !== (int)$stage->id) {
-                redirect($PAGE->url, get_string('stagenotavailable', 'processassign'), null,
-                    \core\output\notification::NOTIFY_ERROR);
+                redirect(
+                    $PAGE->url,
+                    get_string('stagenotavailable', 'processassign'),
+                    null,
+                    \core\output\notification::NOTIFY_ERROR
+                );
             }
 
             $now = time();
@@ -127,17 +148,28 @@ class view_controller {
             }
 
             if (!empty($stage->submissionfile)) {
-                file_save_draft_area_files($data->submissionfiles, $context->id, 'mod_processassign', 'submission',
-                    $submissionid, $filemanageroptions);
+                file_save_draft_area_files(
+                    $data->submissionfiles,
+                    $context->id,
+                    'mod_processassign',
+                    'submission',
+                    $submissionid,
+                    $filemanageroptions
+                );
             }
-            if ($submitted && !empty($processassign->sendnotifications)
-                    && (!$submission || (int)$submission->status !== PROCESSASSIGN_STATUS_SUBMITTED)) {
+            if (
+                $submitted && !empty($processassign->sendnotifications)
+                    && (!$submission || (int)$submission->status !== PROCESSASSIGN_STATUS_SUBMITTED)
+            ) {
                 notification_manager::notify_graders($processassign, $cm, $course, $context, $stage, $USER);
             }
 
-            redirect(new moodle_url('/mod/processassign/view.php', ['id' => $cm->id]),
-                get_string($submitted ? 'submissionsaved' : 'draftsaved', 'processassign'), null,
-                \core\output\notification::NOTIFY_SUCCESS);
+            redirect(
+                new moodle_url('/mod/processassign/view.php', ['id' => $cm->id]),
+                get_string($submitted ? 'submissionsaved' : 'draftsaved', 'processassign'),
+                null,
+                \core\output\notification::NOTIFY_SUCCESS
+            );
         }
 
         if ($submissionid) {
@@ -147,11 +179,17 @@ class view_controller {
                 'userid' => $USER->id,
             ]);
             $stage = $submission ? stage_manager::get_stage_by_id($stages, (int)$submission->stageid) : null;
-            if (!$submission || !$stage || (int)$submission->status !== PROCESSASSIGN_STATUS_GRADED
+            if (
+                !$submission || !$stage || (int)$submission->status !== PROCESSASSIGN_STATUS_GRADED
                     || !stage_manager::stage_requires_feedback_response($processassign, $stage)
-                    || !empty($submission->timefeedbackresponded)) {
-                redirect($PAGE->url, get_string('stagenotavailable', 'processassign'), null,
-                    \core\output\notification::NOTIFY_ERROR);
+                    || !empty($submission->timefeedbackresponded)
+            ) {
+                redirect(
+                    $PAGE->url,
+                    get_string('stagenotavailable', 'processassign'),
+                    null,
+                    \core\output\notification::NOTIFY_ERROR
+                );
             }
 
             $mform = new \mod_processassign\form\feedback_response_form($PAGE->url, [
@@ -161,8 +199,12 @@ class view_controller {
                 return;
             }
             if ((int)$data->submissionid !== (int)$submission->id) {
-                redirect($PAGE->url, get_string('stagenotavailable', 'processassign'), null,
-                    \core\output\notification::NOTIFY_ERROR);
+                redirect(
+                    $PAGE->url,
+                    get_string('stagenotavailable', 'processassign'),
+                    null,
+                    \core\output\notification::NOTIFY_ERROR
+                );
             }
 
             $submission->feedbackresponse = $data->feedbackresponseeditor['text'];
@@ -170,8 +212,12 @@ class view_controller {
             $submission->timefeedbackresponded = time();
             $submission->timemodified = time();
             $DB->update_record('processassign_subs', $submission);
-            redirect($PAGE->url, get_string('feedbackresponsesaved', 'processassign'), null,
-                \core\output\notification::NOTIFY_SUCCESS);
+            redirect(
+                $PAGE->url,
+                get_string('feedbackresponsesaved', 'processassign'),
+                null,
+                \core\output\notification::NOTIFY_SUCCESS
+            );
         }
     }
 
@@ -186,14 +232,25 @@ class view_controller {
      * @param array $editoroptions editor options for the feedback editor
      * @param bool $graderworkflow whether the sequential grader workflow (prev/next) is active
      */
-    public static function handle_grade_view($processassign, $cm, $course, $context, $submissionid, $editoroptions,
-            bool $graderworkflow = false) {
+    public static function handle_grade_view(
+        $processassign,
+        $cm,
+        $course,
+        $context,
+        $submissionid,
+        $editoroptions,
+        bool $graderworkflow = false
+    ) {
         global $DB, $OUTPUT, $USER;
 
         require_capability('mod/processassign:grade', $context);
 
-        $submission = $DB->get_record('processassign_subs',
-            ['id' => $submissionid, 'processassignid' => $processassign->id], '*', MUST_EXIST);
+        $submission = $DB->get_record(
+            'processassign_subs',
+            ['id' => $submissionid, 'processassignid' => $processassign->id],
+            '*',
+            MUST_EXIST
+        );
         $stage = $DB->get_record('processassign_stages', ['id' => $submission->stageid], '*', MUST_EXIST);
         $student = $DB->get_record('user', ['id' => $submission->userid], '*', MUST_EXIST);
         $gradinginstance = stage_manager::get_stage_grading_instance($context, $stage, $submission);
@@ -212,8 +269,14 @@ class view_controller {
             'accepted_types' => '*',
         ];
         $feedbackdraftitemid = file_get_submitted_draft_itemid('feedbackfiles');
-        file_prepare_draft_area($feedbackdraftitemid, $context->id, 'mod_processassign', 'feedback',
-            (int)$submission->id, $feedbackfilemanageroptions);
+        file_prepare_draft_area(
+            $feedbackdraftitemid,
+            $context->id,
+            'mod_processassign',
+            'feedback',
+            (int)$submission->id,
+            $feedbackfilemanageroptions
+        );
 
         $mform = new \mod_processassign\form\grade_form($formurl, [
             'stage' => $stage,
@@ -249,8 +312,14 @@ class view_controller {
             $submission->timemodified = time();
             $DB->update_record('processassign_subs', $submission);
             if (!empty($processassign->feedbackfiles) && isset($data->feedbackfiles)) {
-                file_save_draft_area_files($data->feedbackfiles, $context->id, 'mod_processassign', 'feedback',
-                    $submission->id, $feedbackfilemanageroptions);
+                file_save_draft_area_files(
+                    $data->feedbackfiles,
+                    $context->id,
+                    'mod_processassign',
+                    'feedback',
+                    $submission->id,
+                    $feedbackfilemanageroptions
+                );
             }
             processassign_update_grades($processassign, $submission->userid);
             if (!empty($data->notifystudent)) {
@@ -271,13 +340,17 @@ class view_controller {
                     ]);
                 }
             }
-            redirect($redirecturl,
-                get_string('gradesaved', 'processassign'), null, \core\output\notification::NOTIFY_SUCCESS);
+            redirect(
+                $redirecturl,
+                get_string('gradesaved', 'processassign'),
+                null,
+                \core\output\notification::NOTIFY_SUCCESS
+            );
         }
 
         echo $OUTPUT->header();
         if ($graderworkflow) {
-            echo view_renderer::render_grader_navigation($processassign, $cm, (int)$submission->id);
+            echo view_builder::render_grader_navigation($processassign, $cm, (int)$submission->id);
         }
         echo $OUTPUT->heading(fullname($student), 2, 'mb-1');
         echo html_writer::div(s($student->email), 'text-muted mb-1');
@@ -285,9 +358,9 @@ class view_controller {
             (stage_manager::stage_due_date($processassign, $stage) ?
                 userdate(stage_manager::stage_due_date($processassign, $stage)) : '-'), 'text-muted mb-4');
         echo $OUTPUT->heading(get_string('submissionstatussummary', 'processassign'), 3);
-        echo view_renderer::render_grader_status_panel($processassign, $stage, $submission);
+        echo view_builder::render_grader_status_panel($processassign, $stage, $submission);
         echo $OUTPUT->heading(get_string('submission', 'processassign'), 3);
-        echo view_renderer::render_submission($submission, $context);
+        echo view_builder::render_submission($submission, $context);
         echo $OUTPUT->heading(get_string('grade', 'processassign'), 3);
         $mform->display();
         echo $OUTPUT->footer();

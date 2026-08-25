@@ -19,7 +19,7 @@
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace mod_processassign\local;
@@ -33,10 +33,9 @@ use moodle_url;
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class notification_manager {
-
     /**
      * Send a notification message via the message API.
      *
@@ -49,8 +48,16 @@ class notification_manager {
      * @param string $urlname label for the context url
      * @param array $customdata optional custom data attached to the message
      */
-    public static function send_message(string $name, $userfrom, $userto, string $subject, string $body,
-            moodle_url $url, string $urlname, array $customdata = []): void {
+    public static function send_message(
+        string $name,
+        $userfrom,
+        $userto,
+        string $subject,
+        string $body,
+        moodle_url $url,
+        string $urlname,
+        array $customdata = []
+    ): void {
         $message = new \core\message\message();
         $message->component = 'mod_processassign';
         $message->name = $name;
@@ -82,8 +89,13 @@ class notification_manager {
      * @param \stdClass $student the student user record
      * @return array the filtered grader user records
      */
-    public static function filter_graders_for_student_groups(array $graders, $cm, $course, $context,
-            $student): array {
+    public static function filter_graders_for_student_groups(
+        array $graders,
+        $cm,
+        $course,
+        $context,
+        $student
+    ): array {
         global $CFG;
 
         require_once($CFG->dirroot . '/group/lib.php');
@@ -96,7 +108,7 @@ class notification_manager {
         $studentgroups = groups_get_all_groups($course->id, $student->id, $groupingid, 'g.id');
         $studentgroupids = array_map('intval', array_keys($studentgroups ?: []));
 
-        return array_filter($graders, function($grader) use ($course, $context, $groupingid, $studentgroupids) {
+        return array_filter($graders, function ($grader) use ($course, $context, $groupingid, $studentgroupids) {
             if (has_capability('moodle/site:accessallgroups', $context, $grader->id)) {
                 return true;
             }
@@ -137,12 +149,20 @@ class notification_manager {
         ]);
 
         foreach ($graders as $grader) {
-            self::send_message('grader_notification', $student, $grader, $subject, $body, $url,
-                format_string($processassign->name), [
+            self::send_message(
+                'grader_notification',
+                $student,
+                $grader,
+                $subject,
+                $body,
+                $url,
+                format_string($processassign->name),
+                [
                     'processassignid' => $processassign->id,
                     'stageid' => $stage->id,
                     'studentid' => $student->id,
-                ]);
+                ]
+            );
         }
     }
 
@@ -168,11 +188,19 @@ class notification_manager {
         ]);
 
         $userfrom = !empty($USER->id) ? $USER : core_user::get_noreply_user();
-        self::send_message('student_notification', $userfrom, $student, $subject, $body, $url,
-            format_string($processassign->name), [
+        self::send_message(
+            'student_notification',
+            $userfrom,
+            $student,
+            $subject,
+            $body,
+            $url,
+            format_string($processassign->name),
+            [
                 'processassignid' => $processassign->id,
                 'stageid' => $stage->id,
                 'studentid' => $student->id,
-            ]);
+            ]
+        );
     }
 }

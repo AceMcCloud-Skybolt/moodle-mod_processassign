@@ -19,7 +19,7 @@
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace mod_processassign\form;
@@ -33,10 +33,9 @@ require_once($CFG->libdir . '/formslib.php');
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class submission_form extends \moodleform {
-
     /**
      * Define the form elements based on the stage's submission settings.
      */
@@ -51,20 +50,33 @@ class submission_form extends \moodleform {
         $mform->setDefault('stageid', $stage->id);
 
         if (!empty($stage->submissiononlinetext)) {
-            $mform->addElement('editor', 'submissioneditor', get_string('submissiontext', 'processassign'), null,
-                $options['editor']);
+            $mform->addElement(
+                'editor',
+                'submissioneditor',
+                get_string('submissiontext', 'processassign'),
+                null,
+                $options['editor']
+            );
             $mform->setType('submissioneditor', PARAM_RAW);
         }
 
         if (!empty($stage->submissionfile)) {
-            $mform->addElement('filemanager', 'submissionfiles', get_string('submissionfiles', 'processassign'), null,
-                $options['filemanager']);
+            $mform->addElement(
+                'filemanager',
+                'submissionfiles',
+                get_string('submissionfiles', 'processassign'),
+                null,
+                $options['filemanager']
+            );
         }
 
         if (!empty($processassign->requiresubmissionstatement)) {
-            $mform->addElement('advcheckbox', 'submissionstatement',
+            $mform->addElement(
+                'advcheckbox',
+                'submissionstatement',
                 get_string('submissionstatement', 'assign'),
-                get_string('submissionstatementdefault', 'assign'));
+                get_string('submissionstatementdefault', 'assign')
+            );
         }
 
         if (!empty($processassign->submissiondrafts)) {
@@ -108,8 +120,11 @@ class submission_form extends \moodleform {
         if (!empty($stage->wordlimitenabled) && !empty($stage->wordlimit) && $text !== '') {
             $count = count_words($text, FORMAT_HTML);
             if ($count > (int)$stage->wordlimit) {
-                $errors['submissioneditor'] = get_string('wordlimitexceeded', 'processassign',
-                    (object)['limit' => $stage->wordlimit, 'count' => $count]);
+                $errors['submissioneditor'] = get_string(
+                    'wordlimitexceeded',
+                    'processassign',
+                    (object)['limit' => $stage->wordlimit, 'count' => $count]
+                );
             }
         }
 

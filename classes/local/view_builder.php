@@ -15,11 +15,11 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * HTML rendering for the Process Assignment view page.
+ * HTML construction helpers for the Process Assignment view page.
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace mod_processassign\local;
@@ -34,14 +34,13 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/processassign/lib.php');
 
 /**
- * HTML rendering for the Process Assignment view page.
+ * HTML construction helpers for the Process Assignment view page.
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class view_renderer {
-
+class view_builder {
     /**
      * Render a submission's text and files as HTML.
      *
@@ -54,8 +53,10 @@ class view_renderer {
 
         $html = '';
         if (!empty($submission->submissiontext)) {
-            $html .= html_writer::div(format_text($submission->submissiontext, $submission->submissionformat),
-                'processassign-submission-text');
+            $html .= html_writer::div(
+                format_text($submission->submissiontext, $submission->submissionformat),
+                'processassign-submission-text'
+            );
         }
 
         $fs = get_file_storage();
@@ -63,8 +64,14 @@ class view_renderer {
         if ($files) {
             $items = [];
             foreach ($files as $file) {
-                $url = moodle_url::make_pluginfile_url($context->id, 'mod_processassign', 'submission', $submission->id,
-                    $file->get_filepath(), $file->get_filename());
+                $url = moodle_url::make_pluginfile_url(
+                    $context->id,
+                    'mod_processassign',
+                    'submission',
+                    $submission->id,
+                    $file->get_filepath(),
+                    $file->get_filename()
+                );
                 $items[] = html_writer::link($url, s($file->get_filename()));
             }
             $html .= html_writer::alist($items);
@@ -89,8 +96,14 @@ class view_renderer {
 
         $items = [];
         foreach ($files as $file) {
-            $url = moodle_url::make_pluginfile_url($context->id, 'mod_processassign', 'feedback', $submission->id,
-                $file->get_filepath(), $file->get_filename());
+            $url = moodle_url::make_pluginfile_url(
+                $context->id,
+                'mod_processassign',
+                'feedback',
+                $submission->id,
+                $file->get_filepath(),
+                $file->get_filename()
+            );
             $items[] = html_writer::link($url, s($file->get_filename()));
         }
 
@@ -109,8 +122,14 @@ class view_renderer {
             return '';
         }
 
-        $activity = file_rewrite_pluginfile_urls($processassign->activity, 'pluginfile.php', $context->id,
-            'mod_processassign', 'activity', 0);
+        $activity = file_rewrite_pluginfile_urls(
+            $processassign->activity,
+            'pluginfile.php',
+            $context->id,
+            'mod_processassign',
+            'activity',
+            0
+        );
 
         return html_writer::div(
             html_writer::tag('h3', get_string('activityeditor', 'assign'), ['class' => 'h5']) .
@@ -134,8 +153,14 @@ class view_renderer {
 
         $items = [];
         foreach ($files as $file) {
-            $url = moodle_url::make_pluginfile_url($context->id, 'mod_processassign', 'introattachment', 0,
-                $file->get_filepath(), $file->get_filename());
+            $url = moodle_url::make_pluginfile_url(
+                $context->id,
+                'mod_processassign',
+                'introattachment',
+                0,
+                $file->get_filepath(),
+                $file->get_filename()
+            );
             $items[] = html_writer::link($url, s($file->get_filename()));
         }
 
@@ -155,21 +180,27 @@ class view_renderer {
     public static function stage_requirements_html($stage): string {
         $items = [];
         if (!empty($stage->submissiononlinetext)) {
-            $items[] = html_writer::span(get_string('onlinetext', 'assignsubmission_onlinetext'),
-                'badge bg-light text-dark border me-1');
+            $items[] = html_writer::span(
+                get_string('onlinetext', 'assignsubmission_onlinetext'),
+                'badge bg-light text-dark border me-1'
+            );
         }
         if (!empty($stage->submissionfile)) {
             $items[] = html_writer::span(get_string('filesubmissions', 'assign'), 'badge bg-light text-dark border me-1');
-            $items[] = html_writer::span(get_string('maxfiles', 'assignsubmission_file') . ': ' . (int)$stage->maxfiles,
-                'badge bg-light text-dark border me-1');
+            $items[] = html_writer::span(
+                get_string('maxfiles', 'assignsubmission_file') . ': ' . (int)$stage->maxfiles,
+                'badge bg-light text-dark border me-1'
+            );
             if (!empty($stage->acceptedfiletypes) && $stage->acceptedfiletypes !== '*') {
                 $items[] = html_writer::span(get_string('acceptedfiletypes', 'assignsubmission_file') . ': ' .
                     s($stage->acceptedfiletypes), 'badge bg-light text-dark border me-1');
             }
         }
         if (!empty($stage->wordlimitenabled) && !empty($stage->wordlimit)) {
-            $items[] = html_writer::span(get_string('wordlimit', 'assignsubmission_onlinetext') . ': ' . (int)$stage->wordlimit,
-                'badge bg-light text-dark border me-1');
+            $items[] = html_writer::span(
+                get_string('wordlimit', 'assignsubmission_onlinetext') . ': ' . (int)$stage->wordlimit,
+                'badge bg-light text-dark border me-1'
+            );
         }
 
         return $items ? implode('', $items) : '-';
@@ -193,23 +224,30 @@ class view_renderer {
                 continue;
             }
 
-            $details = html_writer::div(stage_manager::stage_status_label($processassign, $stage, $submission),
-                'small text-muted');
+            $details = html_writer::div(
+                stage_manager::stage_status_label($processassign, $stage, $submission),
+                'small text-muted'
+            );
             if ((int)$submission->status === PROCESSASSIGN_STATUS_GRADED) {
                 $details .= html_writer::div(get_string('grade', 'processassign') . ': ' .
                     format_float($submission->grade, 2) . ' / ' . format_float($stage->maxgrade, 2), 'small');
                 if (!empty($submission->feedback)) {
-                    $details .= html_writer::div(format_text($submission->feedback, $submission->feedbackformat),
-                        'mt-2 alert alert-info');
+                    $details .= html_writer::div(
+                        format_text($submission->feedback, $submission->feedbackformat),
+                        'mt-2 alert alert-info'
+                    );
                 }
                 $details .= self::render_feedback_files($submission, $context);
                 if (!empty($submission->feedbackresponse)) {
-                    $details .= html_writer::div(format_text($submission->feedbackresponse,
-                        $submission->feedbackresponseformat), 'mt-2 alert alert-secondary');
+                    $details .= html_writer::div(format_text(
+                        $submission->feedbackresponse,
+                        $submission->feedbackresponseformat
+                    ), 'mt-2 alert alert-secondary');
                 }
             }
 
-            $rows[] = html_writer::tag('li',
+            $rows[] = html_writer::tag(
+                'li',
                 html_writer::tag('strong', format_string($stage->name)) . $details,
                 ['class' => 'list-group-item']
             );
@@ -237,8 +275,16 @@ class view_renderer {
      * @param array $editoroptions editor options for the submission forms
      * @param int $editstageid stage id the student asked to re-edit, or 0
      */
-    public static function render_student_view($processassign, $cm, $course, $context, $stages, $cansubmit,
-            $editoroptions, $editstageid) {
+    public static function render_student_view(
+        $processassign,
+        $cm,
+        $course,
+        $context,
+        $stages,
+        $cansubmit,
+        $editoroptions,
+        $editstageid
+    ) {
         global $OUTPUT, $PAGE, $USER;
 
         $submissions = stage_manager::get_student_submissions($processassign->id, $USER->id);
@@ -262,9 +308,11 @@ class view_renderer {
             $currentstatus = stage_manager::stage_status_label($processassign, $stageforprogress, $currentsubmission);
             if ($currentsubmission && (int)$currentsubmission->status === PROCESSASSIGN_STATUS_SUBMITTED) {
                 $currentaction = get_string('studentactionwaitfeedback', 'processassign');
-            } else if ($currentsubmission && (int)$currentsubmission->status === PROCESSASSIGN_STATUS_GRADED
+            } else if (
+                $currentsubmission && (int)$currentsubmission->status === PROCESSASSIGN_STATUS_GRADED
                     && stage_manager::stage_requires_feedback_response($processassign, $stageforprogress)
-                    && empty($currentsubmission->timefeedbackresponded)) {
+                    && empty($currentsubmission->timefeedbackresponded)
+            ) {
                 $currentaction = get_string('studentactionfeedbackresponse', 'processassign');
             } else {
                 $currentaction = get_string('studentactionsubmit', 'processassign');
@@ -279,11 +327,15 @@ class view_renderer {
 
         echo html_writer::start_div('alert alert-light border mb-4');
         echo $OUTPUT->heading(get_string('studentprogress', 'processassign'), 4, 'mb-2');
-        echo html_writer::div(get_string('studentprogressvalue', 'processassign',
-            (object)['current' => $currentstageindex, 'total' => $totalstages]), 'mb-1');
+        echo html_writer::div(get_string(
+            'studentprogressvalue',
+            'processassign',
+            (object)['current' => $currentstageindex, 'total' => $totalstages]
+        ), 'mb-1');
         echo html_writer::div(get_string('status', 'processassign') . ': ' . s($currentstatus), 'mb-1');
         echo html_writer::div(get_string('studentaction', 'processassign') . ': ' . s($currentaction), 'fw-semibold');
-        echo html_writer::tag('details',
+        echo html_writer::tag(
+            'details',
             html_writer::tag('summary', get_string('howprocessworks', 'processassign')) .
             html_writer::div(get_string('howprocessworksdesc', 'processassign'), 'mt-2'),
             ['class' => 'mt-3']
@@ -302,15 +354,21 @@ class view_renderer {
             echo $OUTPUT->heading(format_string($stage->name), 4);
             echo html_writer::div(format_text($stage->instructions, $stage->instructionsformat), 'mb-2');
             if (!empty($stage->duedate)) {
-                echo html_writer::div(get_string('duedate', 'processassign') . ': ' . userdate($stage->duedate),
-                    'small text-muted');
+                echo html_writer::div(
+                    get_string('duedate', 'processassign') . ': ' . userdate($stage->duedate),
+                    'small text-muted'
+                );
             } else if (!empty($processassign->duedate)) {
-                echo html_writer::div(get_string('duedate', 'processassign') . ': ' . userdate($processassign->duedate),
-                    'small text-muted');
+                echo html_writer::div(
+                    get_string('duedate', 'processassign') . ': ' . userdate($processassign->duedate),
+                    'small text-muted'
+                );
             }
             if (!empty($stage->wordlimitenabled) && !empty($stage->wordlimit)) {
-                echo html_writer::div(get_string('wordlimit', 'assignsubmission_onlinetext') . ': ' . $stage->wordlimit,
-                    'small text-muted');
+                echo html_writer::div(
+                    get_string('wordlimit', 'assignsubmission_onlinetext') . ': ' . $stage->wordlimit,
+                    'small text-muted'
+                );
             }
             echo html_writer::div(get_string('submissionrequirements', 'processassign') . ': ' .
                 self::stage_requirements_html($stage), 'small mt-2');
@@ -321,14 +379,18 @@ class view_renderer {
                 echo html_writer::div(get_string('grade', 'processassign') . ': ' .
                     format_float($submission->grade, 2) . ' / ' . format_float($stage->maxgrade, 2), 'mt-2');
                 if (!empty($submission->feedback)) {
-                    echo html_writer::div(format_text($submission->feedback, $submission->feedbackformat),
-                        'mt-2 alert alert-info');
+                    echo html_writer::div(
+                        format_text($submission->feedback, $submission->feedbackformat),
+                        'mt-2 alert alert-info'
+                    );
                 }
                 echo self::render_feedback_files($submission, $context);
                 if (!empty($submission->feedbackresponse)) {
                     echo html_writer::tag('h5', get_string('feedbackresponse', 'processassign'), ['class' => 'mt-3']);
-                    echo html_writer::div(format_text($submission->feedbackresponse, $submission->feedbackresponseformat),
-                        'mt-2 alert alert-secondary');
+                    echo html_writer::div(
+                        format_text($submission->feedbackresponse, $submission->feedbackresponseformat),
+                        'mt-2 alert alert-secondary'
+                    );
                 }
             }
 
@@ -342,24 +404,31 @@ class view_renderer {
 
             if (!$unlocked) {
                 $lockreason = get_string('lockreason:previousstage', 'processassign');
-                if ($submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED
+                if (
+                    $submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED
                         && stage_manager::stage_requires_feedback_response($processassign, $stage)
-                        && empty($submission->timefeedbackresponded)) {
+                        && empty($submission->timefeedbackresponded)
+                ) {
                     $lockreason = get_string('lockreason:feedbackresponse', 'processassign');
                 }
                 echo $OUTPUT->notification(get_string('notopenyet', 'processassign'), 'info');
                 echo html_writer::div($lockreason, 'small text-muted');
             } else if ($beforeopen) {
-                echo $OUTPUT->notification(get_string('submissionsnotopen', 'processassign',
-                    userdate($processassign->allowsubmissionsfromdate)), 'info');
+                echo $OUTPUT->notification(get_string(
+                    'submissionsnotopen',
+                    'processassign',
+                    userdate($processassign->allowsubmissionsfromdate)
+                ), 'info');
                 echo html_writer::div(get_string('lockreason:availability', 'processassign'), 'small text-muted');
             } else if ($aftercutoff || $afterstagedue) {
                 echo $OUTPUT->notification(get_string('submissionsclosed', 'processassign'), 'warning');
                 echo html_writer::div(get_string('lockreason:cutoff', 'processassign'), 'small text-muted');
-            } else if ($cansubmit && !$formrendered && $submission
+            } else if (
+                $cansubmit && !$formrendered && $submission
                     && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED
                     && stage_manager::stage_requires_feedback_response($processassign, $stage)
-                    && empty($submission->timefeedbackresponded)) {
+                    && empty($submission->timefeedbackresponded)
+            ) {
                 echo $OUTPUT->heading(get_string('feedbackresponserequired', 'processassign'), 5);
 
                 $mform = new \mod_processassign\form\feedback_response_form($PAGE->url, [
@@ -375,15 +444,22 @@ class view_renderer {
 
                 $mform->display();
                 $formrendered = true;
-            } else if ($cansubmit && !$formrendered && $submission
+            } else if (
+                $cansubmit && !$formrendered && $submission
                     && (int)$submission->status === PROCESSASSIGN_STATUS_SUBMITTED
-                    && (int)$editstageid !== (int)$stage->id) {
+                    && (int)$editstageid !== (int)$stage->id
+            ) {
                 $editurl = new moodle_url('/mod/processassign/view.php', ['id' => $cm->id, 'editstageid' => $stage->id]);
                 echo html_writer::div(get_string('submittedforgrading', 'processassign'), 'mt-2 alert alert-success');
-                echo html_writer::link($editurl, get_string('editsubmission', 'assign'),
-                    ['class' => 'btn btn-secondary mt-2']);
-            } else if ($cansubmit && !$formrendered && $showeditform && (!$submission
-                    || (int)$submission->status !== PROCESSASSIGN_STATUS_GRADED)) {
+                echo html_writer::link(
+                    $editurl,
+                    get_string('editsubmission', 'assign'),
+                    ['class' => 'btn btn-secondary mt-2']
+                );
+            } else if (
+                $cansubmit && !$formrendered && $showeditform && (!$submission
+                    || (int)$submission->status !== PROCESSASSIGN_STATUS_GRADED)
+            ) {
                 echo $OUTPUT->heading(get_string('currentstage', 'processassign'), 5);
 
                 $draftitemid = file_get_submitted_draft_itemid('submissionfiles');
@@ -394,8 +470,14 @@ class view_renderer {
                     'maxfiles' => !empty($stage->maxfiles) ? $stage->maxfiles : 5,
                     'accepted_types' => !empty($stage->acceptedfiletypes) ? $stage->acceptedfiletypes : '*',
                 ];
-                file_prepare_draft_area($draftitemid, $context->id, 'mod_processassign', 'submission', $itemid,
-                    $filemanageroptions);
+                file_prepare_draft_area(
+                    $draftitemid,
+                    $context->id,
+                    'mod_processassign',
+                    'submission',
+                    $itemid,
+                    $filemanageroptions
+                );
 
                 $mform = new \mod_processassign\form\submission_form($PAGE->url, [
                     'stage' => $stage,
@@ -423,8 +505,10 @@ class view_renderer {
             echo html_writer::end_div();
             echo html_writer::end_div();
 
-            if ($submission && (int)$submission->status === PROCESSASSIGN_STATUS_SUBMITTED
-                    && !empty($submission->timesubmitted)) {
+            if (
+                $submission && (int)$submission->status === PROCESSASSIGN_STATUS_SUBMITTED
+                    && !empty($submission->timesubmitted)
+            ) {
                 echo html_writer::start_div('alert alert-success mt-n2 mb-3');
                 echo html_writer::tag('strong', get_string('submissionreceipt', 'processassign')) . ': ' .
                     userdate($submission->timesubmitted);
@@ -488,7 +572,8 @@ class view_renderer {
         static $menuid = 0;
         $menuid++;
         $id = 'processassign-action-menu-' . $menuid;
-        $toggle = html_writer::link('#',
+        $toggle = html_writer::link(
+            '#',
             html_writer::tag('i', '', ['class' => 'icon fa fa-ellipsis-vertical fa-fw', 'aria-hidden' => 'true']) .
                 html_writer::span($label, 'sr-only'),
             [
@@ -506,8 +591,10 @@ class view_renderer {
         $links = [];
         foreach ($items as $item) {
             if (!empty($item['disabled'])) {
-                $links[] = html_writer::span($item['text'] . html_writer::span(get_string('planned', 'processassign'),
-                    'badge bg-light text-dark ms-2'), 'dropdown-item disabled', [
+                $links[] = html_writer::span($item['text'] . html_writer::span(
+                    get_string('planned', 'processassign'),
+                    'badge bg-light text-dark ms-2'
+                ), 'dropdown-item disabled', [
                         'title' => get_string('plannedfeature', 'processassign'),
                     ]);
                 continue;
@@ -515,8 +602,10 @@ class view_renderer {
             $links[] = html_writer::link($item['url'], $item['text'], ['class' => 'dropdown-item']);
         }
 
-        return html_writer::div($toggle . html_writer::div(implode('', $links), 'dropdown-menu'),
-            'dropdown d-inline-block');
+        return html_writer::div(
+            $toggle . html_writer::div(implode('', $links), 'dropdown-menu'),
+            'dropdown d-inline-block'
+        );
     }
 
     /**
@@ -568,8 +657,15 @@ class view_renderer {
      * @param int $stagefilter stage id to filter by, or 0 for all
      * @param string $search free-text search over student name and email
      */
-    public static function render_teacher_table($processassign, $cm, $context, $stages, $statusfilter, $stagefilter,
-            $search) {
+    public static function render_teacher_table(
+        $processassign,
+        $cm,
+        $context,
+        $stages,
+        $statusfilter,
+        $stagefilter,
+        $search
+    ) {
         global $OUTPUT, $PAGE;
 
         $data = stage_manager::collect_teacher_dashboard_data($processassign, $context, $stages);
@@ -721,37 +817,58 @@ class view_renderer {
                         $modified = userdate($submission->timemodified);
                     }
                     $fs = get_file_storage();
-                    $files = $fs->get_area_files($context->id, 'mod_processassign', 'submission', $submission->id,
-                        'filename', false);
+                    $files = $fs->get_area_files(
+                        $context->id,
+                        'mod_processassign',
+                        'submission',
+                        $submission->id,
+                        'filename',
+                        false
+                    );
                     if ($files) {
                         $filelinks = [];
                         foreach ($files as $file) {
-                            $url = moodle_url::make_pluginfile_url($context->id, 'mod_processassign', 'submission',
-                                $submission->id, $file->get_filepath(), $file->get_filename());
+                            $url = moodle_url::make_pluginfile_url(
+                                $context->id,
+                                'mod_processassign',
+                                'submission',
+                                $submission->id,
+                                $file->get_filepath(),
+                                $file->get_filename()
+                            );
                             $filelinks[] = html_writer::link($url, s($file->get_filename()));
                         }
                         $submissionfiles = implode(html_writer::empty_tag('br'), $filelinks);
                     }
                     if (!empty($submission->submissiontext)) {
-                        $submissiontext = html_writer::div(format_text($submission->submissiontext,
-                            $submission->submissionformat), 'processassign-table-text small');
+                        $submissiontext = html_writer::div(format_text(
+                            $submission->submissiontext,
+                            $submission->submissionformat
+                        ), 'processassign-table-text small');
                     }
                     if (!empty($submission->feedback)) {
-                        $feedback = html_writer::div(format_text($submission->feedback, $submission->feedbackformat),
-                            'processassign-table-text small');
+                        $feedback = html_writer::div(
+                            format_text($submission->feedback, $submission->feedbackformat),
+                            'processassign-table-text small'
+                        );
                     }
                     $feedbackfileshtml = self::render_feedback_files($submission, $context);
                     if ($feedbackfileshtml !== '') {
                         $feedbackfiles = $feedbackfileshtml;
                     }
                     if (!empty($submission->feedbackresponse)) {
-                        $feedbackresponse = html_writer::div(format_text($submission->feedbackresponse,
-                            $submission->feedbackresponseformat), 'processassign-table-text small');
+                        $feedbackresponse = html_writer::div(format_text(
+                            $submission->feedbackresponse,
+                            $submission->feedbackresponseformat
+                        ), 'processassign-table-text small');
                     }
                 }
                 if (!empty($student->email)) {
-                    $subject = rawurlencode(get_string('nudgesubject', 'processassign',
-                        format_string($processassign->name)));
+                    $subject = rawurlencode(get_string(
+                        'nudgesubject',
+                        'processassign',
+                        format_string($processassign->name)
+                    ));
                     $body = rawurlencode(get_string('nudgebody', 'processassign', (object)[
                         'stage' => format_string($stage->name),
                         'activity' => format_string($processassign->name),
@@ -763,13 +880,22 @@ class view_renderer {
                 }
 
                 $table->data[] = [
-                    html_writer::checkbox('selected[]', $student->id . ':' . $stage->id, false, '',
-                        ['disabled' => 'disabled']),
-                    html_writer::link(new moodle_url('/user/view.php', ['id' => $student->id, 'course' => $cm->course]),
-                        fullname($student)),
+                    html_writer::checkbox(
+                        'selected[]',
+                        $student->id . ':' . $stage->id,
+                        false,
+                        '',
+                        ['disabled' => 'disabled']
+                    ),
+                    html_writer::link(
+                        new moodle_url('/user/view.php', ['id' => $student->id, 'course' => $cm->course]),
+                        fullname($student)
+                    ),
                     s($student->email),
                     format_string($stage->name) . html_writer::div(
-                        get_string('stagetype:' . $stage->stagetype, 'processassign'), 'small text-muted'),
+                        get_string('stagetype:' . $stage->stagetype, 'processassign'),
+                        'small text-muted'
+                    ),
                     html_writer::span($statuslabel, 'processassign-status processassign-status-' . $statuskey),
                     $grade,
                     $modified,
@@ -778,10 +904,14 @@ class view_renderer {
                     $feedback,
                     $feedbackfiles,
                     $feedbackresponse,
-                    $submissionactions ? self::render_action_menu(get_string('submissionactions', 'processassign'),
-                        $submissionactions) : '-',
-                    $gradeactions ? self::render_action_menu(get_string('gradeactions', 'processassign'),
-                        $gradeactions) : '-',
+                    $submissionactions ? self::render_action_menu(
+                        get_string('submissionactions', 'processassign'),
+                        $submissionactions
+                    ) : '-',
+                    $gradeactions ? self::render_action_menu(
+                        get_string('gradeactions', 'processassign'),
+                        $gradeactions
+                    ) : '-',
                 ];
             }
         }
@@ -838,7 +968,8 @@ class view_renderer {
             ]), get_string('next'), ['class' => 'btn btn-secondary']);
         }
 
-        $records = $DB->get_records_sql("
+        $records = $DB->get_records_sql(
+            "
             SELECT s.id AS submissionid, u.id AS userid, u.firstname, u.lastname, u.firstnamephonetic,
                    u.lastnamephonetic, u.middlename, u.alternatename, st.name AS stagename
               FROM {processassign_subs} s
@@ -853,7 +984,8 @@ class view_renderer {
                 'submitted' => PROCESSASSIGN_STATUS_SUBMITTED,
                 'graded' => PROCESSASSIGN_STATUS_GRADED,
                 'submittedorder' => PROCESSASSIGN_STATUS_SUBMITTED,
-            ]);
+            ]
+        );
         $options = [];
         foreach ($records as $record) {
             $record->id = $record->userid;
@@ -899,10 +1031,16 @@ class view_renderer {
                 (int)$submission->status === PROCESSASSIGN_STATUS_GRADED ? get_string('graded', 'processassign') :
                 get_string('notgraded', 'processassign')],
             [get_string('timeremaining', 'assign'), self::time_remaining_text($processassign, $stage)],
-            [get_string('studentcanedit', 'processassign'), stage_manager::student_can_edit_submission($processassign,
-                $stage, $submission) ? get_string('yes') : get_string('no')],
-            [get_string('currentgradebookgrade', 'processassign'), self::current_gradebook_grade_text($processassign,
-                $stage, $submission)],
+            [get_string('studentcanedit', 'processassign'), stage_manager::student_can_edit_submission(
+                $processassign,
+                $stage,
+                $submission
+            ) ? get_string('yes') : get_string('no')],
+            [get_string('currentgradebookgrade', 'processassign'), self::current_gradebook_grade_text(
+                $processassign,
+                $stage,
+                $submission
+            )],
         ];
         return html_writer::table($table);
     }

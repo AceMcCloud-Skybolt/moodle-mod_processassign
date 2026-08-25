@@ -19,7 +19,7 @@
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace mod_processassign\local;
@@ -34,10 +34,9 @@ require_once($CFG->dirroot . '/grade/grading/lib.php');
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class stage_manager {
-
     /**
      * Fetch all stages for an instance ordered by sort order.
      *
@@ -58,8 +57,14 @@ class stage_manager {
      */
     public static function get_student_submissions($processassignid, $userid) {
         global $DB;
-        return $DB->get_records('processassign_subs',
-            ['processassignid' => $processassignid, 'userid' => $userid], '', '*', 0, 0);
+        return $DB->get_records(
+            'processassign_subs',
+            ['processassignid' => $processassignid, 'userid' => $userid],
+            '',
+            '*',
+            0,
+            0
+        );
     }
 
     /**
@@ -155,8 +160,10 @@ class stage_manager {
         if (self::stage_complete($processassign, $stage, $submission)) {
             return get_string('complete');
         }
-        if ($submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED
-                && self::stage_requires_feedback_response($processassign, $stage)) {
+        if (
+            $submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED
+                && self::stage_requires_feedback_response($processassign, $stage)
+        ) {
             return get_string('feedbackresponserequired', 'processassign');
         }
 
@@ -172,8 +179,12 @@ class stage_manager {
      * @param int $stageid the stage to check
      * @return bool true if the stage is unlocked
      */
-    public static function student_stage_is_unlocked($processassign, array $stages, array $submissions,
-            int $stageid): bool {
+    public static function student_stage_is_unlocked(
+        $processassign,
+        array $stages,
+        array $submissions,
+        int $stageid
+    ): bool {
         foreach ($stages as $stage) {
             $submission = self::get_submission_for_stage($submissions, (int)$stage->id);
             if ((int)$stage->id === $stageid) {
@@ -227,16 +238,20 @@ class stage_manager {
         if (self::stage_complete($processassign, $stage, $submission)) {
             return ['complete', get_string('complete')];
         }
-        if ($submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED
-                && self::stage_requires_feedback_response($processassign, $stage)) {
+        if (
+            $submission && (int)$submission->status === PROCESSASSIGN_STATUS_GRADED
+                && self::stage_requires_feedback_response($processassign, $stage)
+        ) {
             return ['awaitingresponse', get_string('awaitingresponse', 'processassign')];
         }
         if ($submission && (int)$submission->status === PROCESSASSIGN_STATUS_SUBMITTED) {
             return ['awaitingfeedback', get_string('awaitingfeedback', 'processassign')];
         }
-        if ((!empty($stage->duedate) && time() > $stage->duedate)
+        if (
+            (!empty($stage->duedate) && time() > $stage->duedate)
                 || (empty($stage->duedate) && !empty($processassign->duedate) && time() > $processassign->duedate)
-                || (!empty($processassign->cutoffdate) && time() > $processassign->cutoffdate)) {
+                || (!empty($processassign->cutoffdate) && time() > $processassign->cutoffdate)
+        ) {
             return ['late', get_string('late', 'processassign')];
         }
 
@@ -254,8 +269,13 @@ class stage_manager {
     public static function collect_teacher_dashboard_data($processassign, $context, $stages): array {
         global $DB;
 
-        $students = get_enrolled_users($context, 'mod/processassign:submit', 0, 'u.*',
-            'u.lastname, u.firstname, u.id');
+        $students = get_enrolled_users(
+            $context,
+            'mod/processassign:submit',
+            0,
+            'u.*',
+            'u.lastname, u.firstname, u.id'
+        );
 
         if (!$students) {
             return [
@@ -291,8 +311,13 @@ class stage_manager {
                 [$statuskey] = self::dashboard_status($processassign, $stage, $submission);
                 $counts['all']++;
                 $counts[$statuskey]++;
-                if ($submission && in_array((int)$submission->status,
-                        [PROCESSASSIGN_STATUS_SUBMITTED, PROCESSASSIGN_STATUS_GRADED], true)) {
+                if (
+                    $submission && in_array(
+                        (int)$submission->status,
+                        [PROCESSASSIGN_STATUS_SUBMITTED, PROCESSASSIGN_STATUS_GRADED],
+                        true
+                    )
+                ) {
                     $submittedusers[$student->id] = true;
                 }
                 if ($submission && (int)$submission->status === PROCESSASSIGN_STATUS_SUBMITTED) {
@@ -375,7 +400,8 @@ class stage_manager {
     public static function get_grader_submission_ids($processassign): array {
         global $DB;
 
-        $records = $DB->get_records_sql("
+        $records = $DB->get_records_sql(
+            "
             SELECT s.id
               FROM {processassign_subs} s
               JOIN {user} u ON u.id = s.userid
@@ -389,7 +415,8 @@ class stage_manager {
                 'submitted' => PROCESSASSIGN_STATUS_SUBMITTED,
                 'graded' => PROCESSASSIGN_STATUS_GRADED,
                 'submittedorder' => PROCESSASSIGN_STATUS_SUBMITTED,
-            ]);
+            ]
+        );
 
         return array_map('intval', array_keys($records));
     }

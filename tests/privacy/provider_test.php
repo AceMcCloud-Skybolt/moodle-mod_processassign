@@ -19,7 +19,7 @@
  *
  * @package    mod_processassign
  * @copyright  2026 Murdoch Business School
- * @license    https://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace mod_processassign\privacy;
@@ -33,8 +33,15 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/mod/processassign/lib.php');
 
+/**
+ * Unit tests for the Process Assignment privacy provider.
+ */
 final class provider_test extends \core_privacy\tests\provider_testcase {
-
+    /**
+     * Create an activity with submissions for privacy tests.
+     *
+     * @return array activity, context, student, and other student
+     */
     protected function create_processassign_with_submission(): array {
         $course = $this->getDataGenerator()->create_course();
         $student = $this->getDataGenerator()->create_user();
@@ -64,10 +71,19 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         return [$processassign, $context, $student, $otherstudent];
     }
 
+    /**
+     * Get ordered stages for an instance.
+     *
+     * @param \stdClass $processassign activity instance
+     * @return array ordered stage records
+     */
     protected function get_stages(\stdClass $processassign): array {
         global $DB;
-        return $DB->get_records('processassign_stages',
-            ['processassignid' => $processassign->id], 'sortorder ASC');
+        return $DB->get_records(
+            'processassign_stages',
+            ['processassignid' => $processassign->id],
+            'sortorder ASC'
+        );
     }
 
     public function test_get_contexts_for_userid_returns_process_assignment_context(): void {
