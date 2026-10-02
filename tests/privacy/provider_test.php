@@ -36,6 +36,7 @@ require_once($CFG->dirroot . '/mod/processassign/lib.php');
 /**
  * Unit tests for the Process Assignment privacy provider.
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(provider::class)]
 final class provider_test extends \core_privacy\tests\provider_testcase {
     /**
      * Create an activity with submissions for privacy tests.

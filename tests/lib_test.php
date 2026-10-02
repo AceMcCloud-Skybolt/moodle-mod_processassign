@@ -32,6 +32,10 @@ require_once($CFG->dirroot . '/mod/processassign/lib.php');
 /**
  * Unit tests for Process Assignment library functions.
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_processassign\local\stage_manager::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_processassign\local\view_builder::class)]
+#[\PHPUnit\Framework\Attributes\CoversFunction('processassign_save_stages')]
+#[\PHPUnit\Framework\Attributes\CoversFunction('processassign_get_user_grade')]
 final class lib_test extends \advanced_testcase {
     /**
      * Action menus support Bootstrap 5 while retaining Moodle 4.5 compatibility.
