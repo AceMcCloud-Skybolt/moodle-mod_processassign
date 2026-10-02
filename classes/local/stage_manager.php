@@ -117,7 +117,7 @@ class stage_manager {
         if ((int)$submission->status === PROCESSASSIGN_STATUS_SUBMITTED) {
             return get_string('submitted', 'processassign');
         }
-        return get_string('draft', 'moodle');
+        return get_string('submissionstatus_draft', 'assign');
     }
 
     /**

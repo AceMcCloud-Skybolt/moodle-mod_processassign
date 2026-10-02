@@ -34,6 +34,92 @@ require_once($CFG->dirroot . '/mod/processassign/lib.php');
  */
 final class lib_test extends \advanced_testcase {
     /**
+     * Action menus support Bootstrap 5 while retaining Moodle 4.5 compatibility.
+     */
+    public function test_action_menu_supports_bootstrap_versions(): void {
+        $html = \mod_processassign\local\view_builder::render_action_menu('Actions', []);
+        $this->assertStringContainsString('data-bs-toggle="dropdown"', $html);
+        $this->assertStringContainsString('data-toggle="dropdown"', $html);
+        $this->assertStringContainsString('visually-hidden', $html);
+    }
+
+    /**
+     * Draft status uses an existing core language string.
+     */
+    public function test_draft_status_label(): void {
+        $submission = (object)['status' => PROCESSASSIGN_STATUS_DRAFT];
+        $this->assertSame(
+            get_string('submissionstatus_draft', 'assign'),
+            \mod_processassign\local\stage_manager::status_label($submission)
+        );
+    }
+
+    /**
+     * The settings form renders all completion grade choices without missing strings.
+     */
+    public function test_settings_form_renders_completion_and_stage_grading(): void {
+        global $CFG, $COURSE, $PAGE;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        require_once($CFG->dirroot . '/course/modlib.php');
+        require_once($CFG->dirroot . '/mod/processassign/mod_form.php');
+        $course = $this->getDataGenerator()->create_course(['enablecompletion' => 1]);
+        $activity = $this->getDataGenerator()->create_module('processassign', ['course' => $course->id, 'stagecount' => 5]);
+        $cm = get_coursemodule_from_id('processassign', $activity->cmid, 0, false, MUST_EXIST);
+        [$cm, $context, $module, $data, $section] = get_moduleinfo_data($cm, $course);
+        $COURSE = $course;
+        $PAGE->set_course($course);
+        $PAGE->set_context($context);
+        $PAGE->set_url('/course/modedit.php', ['update' => $cm->id]);
+        $form = new \mod_processassign_mod_form($data, $section->section, $cm, $course);
+        $form->set_data($data);
+        $html = $form->render();
+
+        $this->assertStringContainsString('Stage 5', $html);
+        $this->assertStringContainsString('completionusegrade', $html);
+        $this->assertDoesNotMatchRegularExpression('/\[\[[^\]]+\]\]/', $html);
+    }
+
+    /**
+     * The submissions table can render and search students before page output starts.
+     */
+    public function test_submissions_table_renders_filtered_student(): void {
+        global $DB, $PAGE;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $activity = $this->create_processassign();
+        $course = $DB->get_record('course', ['id' => $activity->course], '*', MUST_EXIST);
+        $student = $this->getDataGenerator()->create_user(['firstname' => 'Review', 'lastname' => 'Student']);
+        $this->getDataGenerator()->enrol_user($student->id, $course->id, 'student');
+        $cm = get_coursemodule_from_id('processassign', $activity->cmid, 0, false, MUST_EXIST);
+        $context = \context_module::instance($cm->id);
+        $PAGE->set_course($course);
+        $PAGE->set_context($context);
+        $PAGE->set_url('/mod/processassign/view.php', ['id' => $cm->id]);
+        ob_start();
+        try {
+            \mod_processassign\local\view_builder::render_teacher_table(
+                $activity,
+                $cm,
+                $context,
+                $this->get_stages($activity),
+                'all',
+                0,
+                'review'
+            );
+            $html = ob_get_contents();
+        } finally {
+            ob_end_clean();
+        }
+
+        $this->assertStringContainsString('Review Student', $html);
+        $this->assertStringContainsString('Stage 1', $html);
+        $this->assertDoesNotMatchRegularExpression('/\[\[[^\]]+\]\]/', $html);
+    }
+
+    /**
      * Create a Process Assignment instance for a test.
      *
      * @param array $record instance overrides

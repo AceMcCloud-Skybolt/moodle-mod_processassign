@@ -575,13 +575,14 @@ class view_builder {
         $toggle = html_writer::link(
             '#',
             html_writer::tag('i', '', ['class' => 'icon fa fa-ellipsis-vertical fa-fw', 'aria-hidden' => 'true']) .
-                html_writer::span($label, 'sr-only'),
+                html_writer::span($label, 'sr-only visually-hidden'),
             [
                 'class' => 'btn btn-icon d-flex align-items-center justify-content-center no-caret dropdown-toggle '
                     . 'icon-no-margin',
                 'id' => $id,
                 'role' => 'button',
                 'data-toggle' => 'dropdown',
+                'data-bs-toggle' => 'dropdown',
                 'aria-haspopup' => 'true',
                 'aria-expanded' => 'false',
                 'title' => $label,

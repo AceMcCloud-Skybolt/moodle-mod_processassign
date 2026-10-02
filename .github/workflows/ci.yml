@@ -28,6 +28,7 @@ jobs:
         moodle-branch:
           - MOODLE_501_STABLE
         php:
+          - '8.2'
           - '8.3'
 
     steps:
@@ -70,10 +71,10 @@ jobs:
         run: moodle-plugin-ci phplint
 
       - name: Moodle coding style
-        run: moodle-plugin-ci codechecker
+        run: moodle-plugin-ci phpcs --max-warnings=0
 
       - name: PHPDoc
-        run: moodle-plugin-ci phpdoc
+        run: moodle-plugin-ci phpdoc --max-warnings=0
 
       - name: Validate plugin structure
         run: moodle-plugin-ci validate
@@ -81,5 +82,8 @@ jobs:
       - name: Check upgrade savepoints
         run: moodle-plugin-ci savepoints
 
+      - name: Mustache lint
+        run: moodle-plugin-ci mustache moodle/public/mod/processassign
+
       - name: PHPUnit
-        run: moodle-plugin-ci phpunit
+        run: moodle-plugin-ci phpunit --fail-on-warning --fail-on-deprecation

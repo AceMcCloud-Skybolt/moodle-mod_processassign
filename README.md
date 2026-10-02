@@ -1,5 +1,7 @@
 # Moodle Process Assignment prototype
 
+Moodle 5.1 readiness: [2 October 2026 compatibility review and rollout checks](docs/moodle-5.1-review-2026-10-02.md).
+
 `mod_processassign` is a Moodle activity prototype for staged, process-oriented assignment submission and grading.
 
 The goal is to support assessment designs where students submit evidence in multiple stages, receive feedback and a stage grade, then unlock the next stage. This keeps the learning process inside Moodle instead of moving students and staff to an external platform.

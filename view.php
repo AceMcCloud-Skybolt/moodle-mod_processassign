@@ -28,6 +28,7 @@ use mod_processassign\local\view_builder;
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/mod/processassign/lib.php');
+require_once($CFG->libdir . '/formslib.php');
 
 $id = required_param('id', PARAM_INT);
 $action = optional_param('action', 'view', PARAM_ALPHA);
