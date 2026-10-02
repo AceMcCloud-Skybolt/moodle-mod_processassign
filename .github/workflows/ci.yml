@@ -86,4 +86,4 @@ jobs:
         run: moodle-plugin-ci mustache moodle/public/mod/processassign
 
       - name: PHPUnit
-        run: moodle-plugin-ci phpunit --fail-on-warning --fail-on-deprecation
+        run: moodle-plugin-ci phpunit --fail-on-warning

@@ -21,7 +21,7 @@ This is compatibility evidence, not production certification. The institution's 
 - Remove an unnecessary internal-access guard that caused the last GitHub coding check to fail.
 - Add regression coverage for settings/completion rendering, the filtered staff submissions table, draft labels and dropdown markup.
 - Normalize context IDs in a privacy assertion, since the database can return numeric strings; no privacy-provider behavior was changed.
-- Extend CI to PHP 8.2 and 8.3; fail on coding warnings and PHPUnit deprecations.
+- Extend CI to PHP 8.2 and 8.3; fail on coding and PHPUnit warnings. Moodle's PHPUnit configuration enables failure on deprecations; moodle-plugin-ci does not expose a separate deprecation CLI option.
 
 Release: **0.1.10**, plugin version **2026100200**. No database schema change.
 
