@@ -530,8 +530,14 @@ class view_builder {
     public static function render_grading_summary($processassign, $cm, $context, $stages): void {
         global $OUTPUT;
 
-        $data = stage_manager::collect_teacher_dashboard_data($processassign, $context, $stages);
+        $groupid = stage_manager::grader_groupid($cm, $context);
+        $data = stage_manager::collect_teacher_dashboard_data($processassign, $context, $stages, $groupid);
 
+        echo groups_print_activity_menu(
+            $cm,
+            new moodle_url('/mod/processassign/view.php', ['id' => $cm->id]),
+            true
+        );
         echo $OUTPUT->heading(get_string('gradingsummary', 'processassign'), 3);
         $summary = new html_table();
         $summary->attributes['class'] = 'generaltable mb-4';
@@ -669,7 +675,16 @@ class view_builder {
     ) {
         global $OUTPUT, $PAGE;
 
-        $data = stage_manager::collect_teacher_dashboard_data($processassign, $context, $stages);
+        $groupid = stage_manager::grader_groupid($cm, $context);
+        $data = stage_manager::collect_teacher_dashboard_data($processassign, $context, $stages, $groupid);
+
+        echo groups_print_activity_menu($cm, new moodle_url('/mod/processassign/view.php', [
+            'id' => $cm->id,
+            'action' => 'submissions',
+            'statusfilter' => $statusfilter,
+            'stagefilter' => $stagefilter,
+            'search' => $search,
+        ]), true);
         if (!$data['students']) {
             echo $OUTPUT->notification(get_string('nothingtodisplay'), 'info');
             return;
@@ -938,7 +953,10 @@ class view_builder {
     public static function render_grader_navigation($processassign, $cm, int $submissionid): string {
         global $DB;
 
-        $submissionids = stage_manager::get_grader_submission_ids($processassign);
+        $submissionids = stage_manager::get_grader_submission_ids(
+            $processassign,
+            stage_manager::grader_groupid($cm, \context_module::instance($cm->id))
+        );
         $position = array_search($submissionid, $submissionids, true);
         if ($position === false) {
             return '';

@@ -253,6 +253,9 @@ class view_controller {
         );
         $stage = $DB->get_record('processassign_stages', ['id' => $submission->stageid], '*', MUST_EXIST);
         $student = $DB->get_record('user', ['id' => $submission->userid], '*', MUST_EXIST);
+        if (!groups_user_groups_visible($course, $student->id, $cm)) {
+            throw new \required_capability_exception($context, 'moodle/site:accessallgroups', 'nopermissions', '');
+        }
         $gradinginstance = stage_manager::get_stage_grading_instance($context, $stage, $submission);
 
         $formurl = new moodle_url('/mod/processassign/view.php', [
@@ -330,7 +333,10 @@ class view_controller {
                 'action' => 'submissions',
             ]);
             if ($graderworkflow && optional_param('saveandshownext', '', PARAM_ALPHA)) {
-                $submissionids = stage_manager::get_grader_submission_ids($processassign);
+                $submissionids = stage_manager::get_grader_submission_ids(
+                    $processassign,
+                    stage_manager::grader_groupid($cm, $context)
+                );
                 $position = array_search((int)$submission->id, $submissionids, true);
                 if ($position !== false && isset($submissionids[$position + 1])) {
                     $redirecturl = new moodle_url('/mod/processassign/view.php', [

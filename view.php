@@ -68,6 +68,9 @@ $editoroptions = [
 
 $stages = stage_manager::get_stages($processassign->id);
 
+// Apply any group selection change from the group menu before the grader pages read it.
+$groupid = $cangrade ? stage_manager::grader_groupid($cm, $context, true) : 0;
+
 if ($cansubmit && !$cangrade && $action === 'view' && $stages) {
     view_controller::handle_student_post($processassign, $cm, $course, $context, $stages, $editoroptions);
 }
@@ -76,7 +79,7 @@ if ($action === 'grade' && $submissionid) {
     view_controller::handle_grade_view($processassign, $cm, $course, $context, $submissionid, $editoroptions);
 }
 if ($action === 'grader') {
-    $submissionid = stage_manager::pick_grader_submissionid($processassign, $submissionid);
+    $submissionid = stage_manager::pick_grader_submissionid($processassign, $submissionid, $groupid);
     if (!$submissionid) {
         echo $OUTPUT->header();
         echo $OUTPUT->heading(get_string('gradeall', 'processassign'));

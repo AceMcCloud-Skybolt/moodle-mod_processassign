@@ -264,15 +264,16 @@ class stage_manager {
      * @param \stdClass $processassign the instance record
      * @param \context_module $context the module context
      * @param array $stages all stage records in order
+     * @param int|null $groupid group to limit students to, 0 for all, or null when the grader may see nobody
      * @return array dashboard data keyed by students, submissions, filters, counts, submittedusers, needsgrading
      */
-    public static function collect_teacher_dashboard_data($processassign, $context, $stages): array {
+    public static function collect_teacher_dashboard_data($processassign, $context, $stages, ?int $groupid = 0): array {
         global $DB;
 
-        $students = get_enrolled_users(
+        $students = $groupid === null ? [] : get_enrolled_users(
             $context,
             'mod/processassign:submit',
-            0,
+            $groupid,
             'u.*',
             'u.lastname, u.firstname, u.id'
         );
@@ -395,10 +396,27 @@ class stage_manager {
      * Get the ordered list of gradable submission ids (submitted first, then graded).
      *
      * @param \stdClass $processassign the instance record
+     * @param int|null $groupid group to limit students to, 0 for all, or null when the grader may see nobody
      * @return array submission ids in grading order
      */
-    public static function get_grader_submission_ids($processassign): array {
+    public static function get_grader_submission_ids($processassign, ?int $groupid = 0): array {
         global $DB;
+
+        if ($groupid === null) {
+            return [];
+        }
+
+        $groupjoin = '';
+        $params = [
+            'processassignid' => $processassign->id,
+            'submitted' => PROCESSASSIGN_STATUS_SUBMITTED,
+            'graded' => PROCESSASSIGN_STATUS_GRADED,
+            'submittedorder' => PROCESSASSIGN_STATUS_SUBMITTED,
+        ];
+        if ($groupid > 0) {
+            $groupjoin = 'JOIN {groups_members} gm ON gm.userid = s.userid AND gm.groupid = :groupid';
+            $params['groupid'] = $groupid;
+        }
 
         $records = $DB->get_records_sql(
             "
@@ -406,19 +424,41 @@ class stage_manager {
               FROM {processassign_subs} s
               JOIN {user} u ON u.id = s.userid
               JOIN {processassign_stages} st ON st.id = s.stageid
+              {$groupjoin}
              WHERE s.processassignid = :processassignid
                AND s.status IN (:submitted, :graded)
           ORDER BY CASE WHEN s.status = :submittedorder THEN 0 ELSE 1 END,
                    u.lastname, u.firstname, st.sortorder",
-            [
-                'processassignid' => $processassign->id,
-                'submitted' => PROCESSASSIGN_STATUS_SUBMITTED,
-                'graded' => PROCESSASSIGN_STATUS_GRADED,
-                'submittedorder' => PROCESSASSIGN_STATUS_SUBMITTED,
-            ]
+            $params
         );
 
         return array_map('intval', array_keys($records));
+    }
+
+    /**
+     * Resolve the group the current grader is viewing.
+     *
+     * Returns 0 for all participants, a group id, or null when the activity uses separate groups
+     * and the grader belongs to no group and cannot access all groups.
+     *
+     * @param \stdClass|\cm_info $cm the course module
+     * @param \context_module $context the module context
+     * @param bool $update whether to update the selection from the group URL parameter
+     * @return int|null the group id, 0 for all, or null for nobody
+     */
+    public static function grader_groupid($cm, $context, bool $update = false): ?int {
+        $groupmode = groups_get_activity_groupmode($cm);
+        if ($groupmode == NOGROUPS) {
+            return 0;
+        }
+        $groupid = (int)groups_get_activity_group($cm, $update);
+        if (
+            $groupid === 0 && $groupmode == SEPARATEGROUPS
+                && !has_capability('moodle/site:accessallgroups', $context)
+        ) {
+            return null;
+        }
+        return $groupid;
     }
 
     /**
@@ -426,10 +466,11 @@ class stage_manager {
      *
      * @param \stdClass $processassign the instance record
      * @param int $submissionid the requested submission id, or 0
+     * @param int|null $groupid group to limit students to, 0 for all, or null when the grader may see nobody
      * @return int a valid submission id, or 0 if nothing is gradable
      */
-    public static function pick_grader_submissionid($processassign, int $submissionid): int {
-        $submissionids = self::get_grader_submission_ids($processassign);
+    public static function pick_grader_submissionid($processassign, int $submissionid, ?int $groupid = 0): int {
+        $submissionids = self::get_grader_submission_ids($processassign, $groupid);
         if (!$submissionids) {
             return 0;
         }
